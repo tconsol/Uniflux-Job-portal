@@ -3,7 +3,7 @@ const { adminOnly } = require('../middleware/admin.middleware');
 const {
   listPlans, createPlan, updatePlan, deletePlan,
   listUsers, getUserDetail, updateUserSubscription,
-  getRevenueSummary, triggerDailyJobSets,
+  getRevenueSummary,
 } = require('../controllers/admin.controller');
 
 router.use(adminOnly);
@@ -19,8 +19,7 @@ router.get('/users', listUsers);
 router.get('/users/:id', getUserDetail);
 router.put('/users/:id/subscription', updateUserSubscription);
 
-// Revenue & ops
+// Revenue
 router.get('/revenue', getRevenueSummary);
-router.post('/jobs/regenerate', triggerDailyJobSets);
 
 module.exports = router;

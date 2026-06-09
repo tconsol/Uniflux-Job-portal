@@ -1,78 +1,84 @@
 const axios = require('axios');
-const { getServiceUrl } = require('../config/eureka');
-const DailyJobSet = require('../models/DailyJobSet');
+const jwt = require('jsonwebtoken');
 
-function getTodayString() {
-  return new Date().toISOString().split('T')[0];
+const MARKETPLACE_API_URL = process.env.MARKETPLACE_API_URL || 'https://uniflux-apigateway-64307221061.asia-south1.run.app';
+const MARKETPLACE_BASE = `${MARKETPLACE_API_URL}/api/v1/marketplace/jobs`;
+
+function getServiceToken() {
+  return jwt.sign(
+    { org_id: process.env.MARKETPLACE_ORG_ID || 'uniflux-portal', type: 'service' },
+    process.env.MARKETPLACE_JWT_SECRET || 'uniflux-super-secret-key-must-be-32-chars-min',
+    { expiresIn: '1h' }
+  );
 }
 
-function seededShuffle(array, seed) {
-  const arr = [...array];
-  let s = seed;
-  for (let i = arr.length - 1; i > 0; i--) {
-    s = (s * 1664525 + 1013904223) & 0xffffffff;
-    const j = Math.abs(s) % (i + 1);
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
+function normalizeJobType(raw) {
+  if (!raw) return 'full-time';
+  const r = raw.toLowerCase().replace(/[-_\s]/g, '');
+  if (r.includes('part')) return 'part-time';
+  if (r.includes('contract')) return 'contract';
+  if (r.includes('freelance')) return 'freelance';
+  if (r.includes('intern')) return 'internship';
+  return 'full-time';
 }
 
-async function fetchJobsFromService(query = {}) {
-  const serviceUrl = getServiceUrl(process.env.JOB_SERVICE_NAME || 'UNIFLUX-JOB-SERVICE');
-  if (!serviceUrl) {
-    throw new Error('Job service not available via Eureka');
-  }
-  const params = new URLSearchParams(query).toString();
-  const response = await axios.get(`${serviceUrl}/api/jobs?${params}`, {
+function mapLocation(loc) {
+  if (!loc) return '';
+  if (loc.is_remote) return 'Remote';
+  return loc.raw || [loc.city, loc.state, loc.country].filter(Boolean).join(', ') || '';
+}
+
+function mapScrapedJob(sj) {
+  return {
+    _id: sj.id || sj._id,
+    title: sj.title || '',
+    company: sj.company_name || '',
+    location: mapLocation(sj.location),
+    jobType: normalizeJobType(sj.job_type),
+    salaryMin: sj.salary?.min ?? null,
+    salaryMax: sj.salary?.max ?? null,
+    salaryCurrency: sj.salary?.currency ?? null,
+    skills: sj.skills || [],
+    description: sj.description || '',
+    applyUrl: sj.url || '',
+    postedAt: sj.posted_at || sj.scraped_at,
+    source: sj.source_site || '',
+  };
+}
+
+async function fetchJobsFromMarketplace({ limit = 20, skip = 0, keyword, location, job_type, site, skills } = {}) {
+  const token = getServiceToken();
+  const params = {};
+  if (limit)    params.limit = limit;
+  if (skip)     params.skip = skip;
+  if (keyword)  params.keyword = keyword;
+  if (location) params.location = location;
+  if (job_type) params.job_type = job_type;
+  if (site)     params.site = site;
+  if (skills)   params.skills = skills;
+
+  const response = await axios.get(`${MARKETPLACE_BASE}/`, {
+    params,
+    headers: { Authorization: `Bearer ${token}` },
+    timeout: 15000,
+  });
+
+  const data = response.data;
+  return {
+    total: data.total ?? 0,
+    jobs: (data.jobs || []).map(mapScrapedJob),
+  };
+}
+
+async function fetchJobById(id) {
+  const token = getServiceToken();
+  const response = await axios.get(`${MARKETPLACE_BASE}/`, {
+    params: { limit: 100, skip: 0 },
+    headers: { Authorization: `Bearer ${token}` },
     timeout: 10000,
   });
-  return response.data;
+  const jobs = (response.data.jobs || []).map(mapScrapedJob);
+  return jobs.find((j) => j._id === id) || null;
 }
 
-async function fetchJobsByIds(ids) {
-  const serviceUrl = getServiceUrl(process.env.JOB_SERVICE_NAME || 'UNIFLUX-JOB-SERVICE');
-  if (!serviceUrl) throw new Error('Job service not available');
-  const response = await axios.post(
-    `${serviceUrl}/api/jobs/batch`,
-    { ids },
-    { timeout: 10000 }
-  );
-  return response.data;
-}
-
-async function generateDailyJobSet(planSlug, jobLimit) {
-  const today = getTodayString();
-  const seed = Math.floor(Date.now() / 86400000);
-
-  try {
-    const allJobsResponse = await fetchJobsFromService({ limit: 10000, activeOnly: true });
-    const allJobs = allJobsResponse.jobs || allJobsResponse;
-    const allIds = allJobs.map((j) => j._id || j.id);
-
-    const shuffled = seededShuffle(allIds, seed);
-    const limited = jobLimit === -1 ? shuffled : shuffled.slice(0, jobLimit);
-
-    await DailyJobSet.findOneAndUpdate(
-      { date: today, planSlug },
-      { date: today, planSlug, jobIds: limited, seed },
-      { upsert: true, new: true }
-    );
-
-    return limited;
-  } catch (err) {
-    console.error(`Failed to generate daily job set for ${planSlug}:`, err.message);
-    return [];
-  }
-}
-
-async function getDailyJobSet(planSlug, jobLimit) {
-  const today = getTodayString();
-  let set = await DailyJobSet.findOne({ date: today, planSlug });
-  if (!set) {
-    const ids = await generateDailyJobSet(planSlug, jobLimit);
-    return ids;
-  }
-  return set.jobIds;
-}
-
-module.exports = { fetchJobsFromService, fetchJobsByIds, generateDailyJobSet, getDailyJobSet, getTodayString };
+module.exports = { fetchJobsFromMarketplace, fetchJobById, mapScrapedJob };

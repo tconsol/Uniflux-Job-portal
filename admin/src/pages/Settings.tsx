@@ -34,7 +34,7 @@ export default function Settings() {
         <h2 className="text-sm font-semibold text-gray-700 mb-3">Service Info</h2>
         <div className="space-y-2 text-sm text-gray-600">
           <p>Admin panel manages users, subscriptions, and plan pricing for Uniflux.</p>
-          <p className="text-gray-400 text-xs">API: proxied to <code className="bg-gray-100 px-1 rounded">localhost:5000</code></p>
+          <p className="text-gray-400 text-xs">API: <code className="bg-gray-100 px-1 rounded">{import.meta.env.VITE_API_BASE_URL}</code></p>
         </div>
       </div>
     </div>

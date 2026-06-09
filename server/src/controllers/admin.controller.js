@@ -1,8 +1,6 @@
 const User = require('../models/User');
 const Plan = require('../models/Plan');
 const Subscription = require('../models/Subscription');
-const { precomputeAllDailySets } = require('../services/scheduler.service');
-
 // ── Plans ────────────────────────────────────────────────────────────────────
 
 async function listPlans(req, res) {
@@ -148,17 +146,8 @@ async function getRevenueSummary(req, res) {
   }
 }
 
-async function triggerDailyJobSets(req, res) {
-  try {
-    precomputeAllDailySets();
-    res.json({ message: 'Daily job set generation triggered' });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-}
-
 module.exports = {
   listPlans, createPlan, updatePlan, deletePlan,
   listUsers, getUserDetail, updateUserSubscription,
-  getRevenueSummary, triggerDailyJobSets,
+  getRevenueSummary,
 };

@@ -1,54 +1,38 @@
-const { getDailyJobSet, fetchJobsByIds, fetchJobsFromService } = require('../services/jobs.service');
+const { fetchJobsFromMarketplace, fetchJobById } = require('../services/jobs.service');
 const { addConnection, removeConnection } = require('../services/sse.service');
-const Plan = require('../models/Plan');
 
 async function listJobs(req, res) {
   try {
     const { planSlug, jobLimit } = req.subscription;
-    const { page = 1, limit = 20, location, jobType, salaryMin, company, skills } = req.query;
+    const { page = 1, limit = 20, keyword, location, jobType, skills } = req.query;
 
-    const jobIds = await getDailyJobSet(planSlug, jobLimit);
-    if (!jobIds.length) {
-      return res.json({ jobs: [], total: 0, page: 1, limit: parseInt(limit), planSlug, jobLimit });
-    }
+    const pageNum  = parseInt(page);
+    const limitNum = Math.min(parseInt(limit), jobLimit);
+    const skip     = (pageNum - 1) * limitNum;
 
-    const filters = {};
-    if (location) filters.location = location;
-    if (jobType) filters.jobType = jobType;
-    if (salaryMin) filters.salaryMin = parseInt(salaryMin);
-    if (company) filters.company = company;
-    if (skills) filters.skills = skills.split(',');
+    const { jobs, total } = await fetchJobsFromMarketplace({
+      limit: jobLimit,
+      skip,
+      keyword,
+      location,
+      job_type: jobType,
+      skills,
+    });
 
-    let allJobs = await fetchJobsByIds(jobIds);
-
-    if (Object.keys(filters).length > 0) {
-      allJobs = allJobs.filter((job) => {
-        if (filters.location && !job.location?.toLowerCase().includes(filters.location.toLowerCase())) return false;
-        if (filters.jobType && job.jobType !== filters.jobType) return false;
-        if (filters.salaryMin && job.salaryMin < filters.salaryMin) return false;
-        if (filters.company && !job.company?.toLowerCase().includes(filters.company.toLowerCase())) return false;
-        if (filters.skills?.length && !filters.skills.some((s) => job.skills?.includes(s))) return false;
-        return true;
-      });
-    }
-
-    const total = allJobs.length;
-    const pageNum = parseInt(page);
-    const limitNum = parseInt(limit);
-    const paginated = allJobs.slice((pageNum - 1) * limitNum, pageNum * limitNum);
-
-    res.json({ jobs: paginated, total, page: pageNum, limit: limitNum, planSlug, jobLimit });
+    res.json({ jobs, total, page: pageNum, limit: limitNum, planSlug, jobLimit });
   } catch (err) {
+    console.error('[listJobs]', err.message);
     res.status(500).json({ message: err.message });
   }
 }
 
 async function getJob(req, res) {
   try {
-    const jobs = await fetchJobsByIds([req.params.id]);
-    if (!jobs.length) return res.status(404).json({ message: 'Job not found' });
-    res.json({ job: jobs[0] });
+    const job = await fetchJobById(req.params.id);
+    if (!job) return res.status(404).json({ message: 'Job not found' });
+    res.json({ job });
   } catch (err) {
+    console.error('[getJob]', err.message);
     res.status(500).json({ message: err.message });
   }
 }

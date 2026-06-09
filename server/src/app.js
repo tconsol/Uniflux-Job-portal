@@ -28,11 +28,16 @@ app.use((req, res, next) => {
 });
 
 // ── CORS ─────────────────────────────────────────────────────────────────────
+const ALLOWED_ORIGINS = [
+  ...(process.env.CLIENT_URL || 'http://localhost:3000').split(','),
+  ...(process.env.ADMIN_URL  || 'http://localhost:3001').split(','),
+].map((o) => o.trim()).filter(Boolean);
+
 app.use(cors({
-  origin: [
-    process.env.CLIENT_URL || 'http://localhost:3000',
-    process.env.ADMIN_URL  || 'http://localhost:3001',
-  ],
+  origin: (origin, cb) => {
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+    cb(new Error(`CORS: origin ${origin} not allowed`));
+  },
   credentials: true,
 }));
 
