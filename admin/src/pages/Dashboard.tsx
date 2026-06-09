@@ -45,11 +45,13 @@ export default function Dashboard() {
     return <p className="text-red-500 p-6">Failed to load dashboard data.</p>;
   }
 
-  const chartData = data.planBreakdown.map((p) => ({
-    name: p.planSlug.charAt(0).toUpperCase() + p.planSlug.slice(1),
-    users: p.count,
-    mrr: p.mrr,
-  }));
+  const chartData = data.planBreakdown
+    .filter((p) => !!p.planSlug)
+    .map((p) => ({
+      name: p.planSlug.charAt(0).toUpperCase() + p.planSlug.slice(1),
+      users: p.count,
+      mrr: p.mrr ?? 0,
+    }));
 
   return (
     <div className="p-6 space-y-6">
@@ -156,7 +158,7 @@ export default function Dashboard() {
                 <tr key={u._id}>
                   <td className="py-3 text-gray-900 font-medium">{u.name}</td>
                   <td className="py-3 text-gray-500">{u.email}</td>
-                  <td className="py-3"><Badge label={u.planSlug} /></td>
+                  <td className="py-3"><Badge label={u.planSlug ?? undefined} /></td>
                   <td className="py-3 text-gray-400">
                     {new Date(u.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </td>

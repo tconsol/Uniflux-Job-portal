@@ -108,17 +108,19 @@ async function getRevenueSummary(req, res) {
     const totalUsers = await User.countDocuments();
     const activeSubscriptions = await Subscription.countDocuments({ status: 'active' });
 
-    const planBreakdown = await Subscription.aggregate([
+    const rawBreakdown = await Subscription.aggregate([
       { $match: { status: 'active' } },
       { $group: { _id: '$planSlug', count: { $sum: 1 } } },
     ]);
 
     const plans = await Plan.find({ isActive: true });
     let estimatedMRR = 0;
-    for (const pb of planBreakdown) {
+    const planBreakdown = rawBreakdown.map((pb) => {
       const plan = plans.find((p) => p.slug === pb._id);
-      if (plan) estimatedMRR += plan.priceMonthly * pb.count;
-    }
+      const mrr = plan ? plan.priceMonthly * pb.count : 0;
+      estimatedMRR += mrr;
+      return { planSlug: pb._id, count: pb.count, mrr };
+    });
 
     const recentUsers = await User.find()
       .sort({ createdAt: -1 })

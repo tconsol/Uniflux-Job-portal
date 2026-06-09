@@ -15,7 +15,8 @@ export function useSSE({ onJobUpdate, onMessage, enabled = true }: SSEOptions) {
     const tokens = getStoredTokens();
     if (!tokens?.access) return;
 
-    const url = `/api/jobs/sse`;
+    const base = import.meta.env.VITE_API_BASE_URL ?? '';
+    const url = `${base}/api/jobs/sse`;
     // EventSource doesn't support custom headers; pass token as query param
     const es = new EventSource(`${url}?token=${tokens.access}`);
     esRef.current = es;

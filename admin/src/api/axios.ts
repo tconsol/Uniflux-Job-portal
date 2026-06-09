@@ -20,7 +20,8 @@ export function clearStoredTokens() {
   localStorage.removeItem(STORAGE_KEY);
 }
 
-const api = axios.create({ baseURL: '/api' });
+const BASE = import.meta.env.VITE_API_BASE_URL ?? '';
+const api = axios.create({ baseURL: `${BASE}/api` });
 
 api.interceptors.request.use((config) => {
   const tokens = getStoredTokens();
@@ -55,7 +56,7 @@ api.interceptors.response.use(
       }
       refreshing = true;
       try {
-        const { data } = await axios.post('/api/auth/refresh', { refreshToken: tokens.refresh });
+        const { data } = await axios.post(`${BASE}/api/auth/refresh`, { refreshToken: tokens.refresh });
         const newTokens = { access: data.tokens.access, refresh: data.tokens.refresh };
         setStoredTokens(newTokens);
         refreshQueue.forEach((cb) => cb(data.tokens.access));
