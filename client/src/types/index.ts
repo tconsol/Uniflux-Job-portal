@@ -5,6 +5,8 @@ export interface User {
   googleId?: string;
   isAdmin: boolean;
   isActive: boolean;
+  agreedToTerms: boolean;
+  agreedToTermsAt?: string;
   razorpayCustomerId?: string;
   profile: {
     resumeUrl?: string;

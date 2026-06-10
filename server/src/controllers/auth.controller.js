@@ -29,9 +29,11 @@ function hashOtp(otp) {
 
 async function register(req, res) {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, agreedToTerms } = req.body;
     if (!name || !email || !password)
       return res.status(400).json({ message: 'name, email, password required' });
+    if (!agreedToTerms)
+      return res.status(400).json({ message: 'You must accept the Terms and Conditions' });
 
     const exists = await User.findOne({ email });
     if (exists) {
@@ -53,6 +55,8 @@ async function register(req, res) {
       email,
       password,
       isEmailVerified: false,
+      agreedToTerms: true,
+      agreedToTermsAt: new Date(),
       otp: hashOtp(otp),
       otpExpiry: new Date(Date.now() + 10 * 60 * 1000),
     });

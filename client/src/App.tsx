@@ -12,6 +12,8 @@ import Profile from './pages/Profile';
 import OAuthCallback from './pages/OAuthCallback';
 import VerifyEmail from './pages/VerifyEmail';
 import ForgotPassword from './pages/ForgotPassword';
+import Terms from './pages/Terms';
+import Privacy from './pages/Privacy';
 import ScrollToTop from './components/ScrollToTop';
 
 function Layout({ children }: { children: React.ReactNode }) {
@@ -36,6 +38,8 @@ export default function App() {
       <Route path="/oauth/callback" element={<OAuthCallback />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/terms" element={<Terms />} />
+      <Route path="/privacy" element={<Privacy />} />
 
       {/* Protected */}
       <Route path="/jobs" element={<Layout><ProtectedRoute><Jobs /></ProtectedRoute></Layout>} />

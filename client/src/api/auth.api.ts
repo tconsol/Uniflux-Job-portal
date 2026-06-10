@@ -1,8 +1,8 @@
 import api from './axios';
 import type { User, AuthTokens } from '../types';
 
-export async function register(name: string, email: string, password: string) {
-  const { data } = await api.post<{ message: string; email: string }>('/auth/register', { name, email, password });
+export async function register(name: string, email: string, password: string, agreedToTerms: boolean) {
+  const { data } = await api.post<{ message: string; email: string }>('/auth/register', { name, email, password, agreedToTerms });
   return data;
 }
 

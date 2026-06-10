@@ -11,6 +11,8 @@ const userSchema = new mongoose.Schema(
     isActive: { type: Boolean, default: true },
     isAdmin: { type: Boolean, default: false },
     isEmailVerified: { type: Boolean, default: false },
+    agreedToTerms: { type: Boolean, default: false },
+    agreedToTermsAt: { type: Date, default: null },
     otp: { type: String, default: null, select: false },
     otpExpiry: { type: Date, default: null },
     profile: {
