@@ -9,6 +9,7 @@ const EMPTY_PLAN: Partial<Plan> = {
   slug: 'basic',
   name: '',
   jobLimit: 10,
+  applyLimit: 10,
   priceMonthly: 0,
   priceYearly: 0,
   razorpayPlanIdMonthly: '',
@@ -97,6 +98,18 @@ function PlanModal({
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
             </div>
+            <div>
+              <label className="text-xs text-gray-500 mb-1 block">Apply Limit (-1=∞)</label>
+              <input
+                type="number"
+                value={form.applyLimit ?? 10}
+                onChange={(e) => set('applyLimit', Number(e.target.value))}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs text-gray-500 mb-1 block">Monthly (₹)</label>
               <input
@@ -246,6 +259,7 @@ export default function Plans() {
               <div className="space-y-1 text-sm text-gray-600 mb-4">
                 <p>₹{plan.priceMonthly}/mo · ₹{plan.priceYearly}/yr</p>
                 <p>{plan.jobLimit === -1 ? 'Unlimited' : plan.jobLimit.toLocaleString()} jobs/day</p>
+                <p>{plan.applyLimit === -1 ? 'Unlimited' : (plan.applyLimit ?? 10).toLocaleString()} applies/period</p>
                 <p className="text-gray-400 text-xs">{plan.features.length} features</p>
               </div>
 

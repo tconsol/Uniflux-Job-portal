@@ -76,4 +76,58 @@ async function sendOtpEmail(to, name, otp) {
   });
 }
 
-module.exports = { sendOtpEmail };
+async function sendPasswordResetEmail(to, name, otp) {
+  const t = getTransporter();
+  await t.sendMail({
+    from: process.env.EMAIL_FROM || 'Uniflux <noreply@uniflux.com>',
+    to,
+    subject: `${otp} is your Uniflux password reset code`,
+    text: `Hi ${name},\n\nYour Uniflux password reset code is: ${otp}\n\nThis code expires in 10 minutes. Do not share it.\n\nIf you did not request this, ignore this email.\n\nUniflux Team`,
+    html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body style="margin:0;padding:0;background:#f3f4f6;font-family:Inter,system-ui,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" style="max-width:480px;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+          <tr>
+            <td style="background:#2563eb;padding:28px 32px;">
+              <p style="margin:0;font-size:22px;font-weight:700;color:#ffffff;letter-spacing:-0.3px;">Uniflux</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:32px;">
+              <p style="margin:0 0 8px;font-size:20px;font-weight:700;color:#111827;">Reset your password</p>
+              <p style="margin:0 0 28px;font-size:14px;color:#6b7280;line-height:1.6;">
+                Hi ${name}, use the code below to reset your password. It expires in <strong>10 minutes</strong>.
+              </p>
+              <div style="background:#fff7ed;border:2px solid #fed7aa;border-radius:12px;padding:24px;text-align:center;margin-bottom:28px;">
+                <p style="margin:0 0 4px;font-size:12px;font-weight:600;color:#6b7280;letter-spacing:1px;text-transform:uppercase;">Password Reset Code</p>
+                <p style="margin:0;font-size:40px;font-weight:800;color:#ea580c;letter-spacing:12px;">${otp}</p>
+              </div>
+              <p style="margin:0;font-size:13px;color:#9ca3af;line-height:1.6;">
+                If you did not request a password reset, you can safely ignore this email.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:16px 32px 24px;border-top:1px solid #f3f4f6;">
+              <p style="margin:0;font-size:12px;color:#d1d5db;">© ${new Date().getFullYear()} Uniflux. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `,
+  });
+}
+
+module.exports = { sendOtpEmail, sendPasswordResetEmail };

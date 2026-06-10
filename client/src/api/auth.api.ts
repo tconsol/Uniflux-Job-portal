@@ -35,3 +35,18 @@ export async function refreshTokens(refreshToken: string) {
   const { data } = await api.post<{ tokens: AuthTokens }>('/auth/refresh', { refreshToken });
   return data.tokens;
 }
+
+export async function forgotPassword(email: string) {
+  const { data } = await api.post<{ message: string; email: string }>('/auth/forgot-password', { email });
+  return data;
+}
+
+export async function resetPassword(email: string, otp: string, newPassword: string) {
+  const { data } = await api.post<{ message: string }>('/auth/reset-password', { email, otp, newPassword });
+  return data;
+}
+
+export async function updateProfile(payload: { name?: string; currentPassword?: string; newPassword?: string }) {
+  const { data } = await api.put<{ message: string; user: User }>('/auth/profile', payload);
+  return data;
+}

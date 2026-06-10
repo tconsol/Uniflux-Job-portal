@@ -14,6 +14,7 @@ export interface Plan {
   slug: 'basic' | 'standard' | 'premium' | 'elite';
   name: string;
   jobLimit: number;
+  applyLimit: number;
   priceMonthly: number;
   priceYearly: number;
   razorpayPlanIdMonthly?: string;

@@ -2,7 +2,7 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('googleapis').Auth;
 const User = require('../models/User');
-const { sendOtpEmail } = require('../services/email.service');
+const { sendOtpEmail, sendPasswordResetEmail } = require('../services/email.service');
 
 function generateTokens(userId) {
   const access = jwt.sign(
@@ -210,4 +210,81 @@ async function me(req, res) {
   res.json({ user: req.user });
 }
 
-module.exports = { register, verifyOtp, resendOtp, login, refresh, getGoogleOAuthUrl, googleCallback, me };
+async function forgotPassword(req, res) {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: 'email required' });
+
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: 'No account found with this email' });
+
+    const otp = generateOtp();
+    user.otp = hashOtp(otp);
+    user.otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+    await user.save();
+    await sendPasswordResetEmail(email, user.name, otp);
+
+    res.json({ message: 'Password reset OTP sent to your email', email });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+}
+
+async function resetPassword(req, res) {
+  try {
+    const { email, otp, newPassword } = req.body;
+    if (!email || !otp || !newPassword)
+      return res.status(400).json({ message: 'email, otp, and newPassword required' });
+    if (newPassword.length < 6)
+      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+
+    const user = await User.findOne({ email }).select('+otp +otpExpiry');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (!user.otp || !user.otpExpiry) return res.status(400).json({ message: 'No OTP found. Request a new one.' });
+    if (Date.now() > user.otpExpiry.getTime()) return res.status(400).json({ message: 'OTP expired. Request a new one.' });
+    if (hashOtp(String(otp)) !== user.otp) return res.status(400).json({ message: 'Invalid OTP' });
+
+    user.password = newPassword;
+    user.otp = null;
+    user.otpExpiry = null;
+    await user.save();
+
+    res.json({ message: 'Password reset successfully. You can now log in.' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+}
+
+async function updateProfile(req, res) {
+  try {
+    const { name, currentPassword, newPassword } = req.body;
+    const user = await User.findById(req.user._id).select('+password');
+
+    if (name && name.trim()) {
+      user.name = name.trim();
+    }
+
+    if (newPassword) {
+      if (!currentPassword)
+        return res.status(400).json({ message: 'Current password required to change password' });
+      if (!user.password)
+        return res.status(400).json({ message: 'Google account — set a password via forgot password flow' });
+      const valid = await user.comparePassword(currentPassword);
+      if (!valid) return res.status(400).json({ message: 'Current password is incorrect' });
+      if (newPassword.length < 6)
+        return res.status(400).json({ message: 'New password must be at least 6 characters' });
+      user.password = newPassword;
+    }
+
+    await user.save();
+    res.json({ message: 'Profile updated', user: user.toJSON() });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+}
+
+module.exports = {
+  register, verifyOtp, resendOtp, login, refresh,
+  getGoogleOAuthUrl, googleCallback, me,
+  forgotPassword, resetPassword, updateProfile,
+};

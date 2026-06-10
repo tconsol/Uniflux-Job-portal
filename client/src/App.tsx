@@ -11,6 +11,7 @@ import Plans from './pages/Plans';
 import Profile from './pages/Profile';
 import OAuthCallback from './pages/OAuthCallback';
 import VerifyEmail from './pages/VerifyEmail';
+import ForgotPassword from './pages/ForgotPassword';
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -31,6 +32,7 @@ export default function App() {
       <Route path="/plans" element={<Layout><Plans /></Layout>} />
       <Route path="/oauth/callback" element={<OAuthCallback />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
 
       {/* Protected */}
       <Route path="/jobs" element={<Layout><ProtectedRoute><Jobs /></ProtectedRoute></Layout>} />
