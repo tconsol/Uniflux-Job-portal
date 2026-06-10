@@ -1,6 +1,8 @@
 require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') });
 const mongoose = require('mongoose');
 const User = require('../models/User');
+const Subscription = require('../models/Subscription');
+const UserApply = require('../models/UserApply');
 
 const ADMIN_EMAIL = 'admin@uniflux.com';
 const ADMIN_PASSWORD = 'Admin@123';
@@ -10,19 +12,13 @@ async function seedAdmin() {
   await mongoose.connect(process.env.MONGODB_URI);
   console.log('Connected to MongoDB');
 
-  const existing = await User.findOne({ email: ADMIN_EMAIL });
-  if (existing) {
-    if (!existing.isAdmin) {
-      existing.isAdmin = true;
-      existing.isEmailVerified = true;
-      await existing.save();
-      console.log('Existing user promoted to admin:', ADMIN_EMAIL);
-    } else {
-      console.log('Admin already exists:', ADMIN_EMAIL);
-    }
-    await mongoose.disconnect();
-    return;
-  }
+  // Wipe all existing data
+  await Promise.all([
+    User.deleteMany({}),
+    Subscription.deleteMany({}),
+    UserApply.deleteMany({}),
+  ]);
+  console.log('All existing data cleared');
 
   await User.create({
     name: ADMIN_NAME,

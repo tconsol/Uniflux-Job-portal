@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Briefcase, Menu, X, User, LogOut, ChevronDown, ClipboardList } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSubscription } from '../hooks/useBilling';
 
 const PLAN_COLORS: Record<string, string> = {
-  basic:    'bg-gray-100 text-gray-700',
+  free:     'bg-gray-100 text-gray-700',
   standard: 'bg-blue-100 text-blue-700',
   premium:  'bg-purple-100 text-purple-700',
   elite:    'bg-amber-100 text-amber-700',
@@ -18,8 +18,20 @@ export default function Navbar() {
   const { pathname } = useLocation();
   const [open, setOpen]       = useState(false);
   const [dropOpen, setDropOpen] = useState(false);
+  const dropRef = useRef<HTMLDivElement>(null);
 
-  const planSlug = subData?.subscription?.planSlug ?? 'basic';
+  const planSlug = subData?.subscription?.planSlug ?? 'free';
+
+  useEffect(() => {
+    if (!dropOpen) return;
+    function handleClick(e: MouseEvent) {
+      if (dropRef.current && !dropRef.current.contains(e.target as Node)) {
+        setDropOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [dropOpen]);
 
   function handleLogout() {
     logout();
@@ -88,7 +100,7 @@ export default function Navbar() {
           {/* Desktop right */}
           <div className="hidden md:flex items-center gap-3">
             {user ? (
-              <div className="relative">
+              <div className="relative" ref={dropRef}>
                 <button
                   onClick={() => setDropOpen(!dropOpen)}
                   className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"

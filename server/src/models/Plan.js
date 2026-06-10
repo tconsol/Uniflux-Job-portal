@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const planSchema = new mongoose.Schema(
   {
-    slug: { type: String, required: true, unique: true, enum: ['basic', 'standard', 'premium', 'elite'] },
+    slug: { type: String, required: true, unique: true, enum: ['free', 'standard', 'premium', 'elite'] },
     name: { type: String, required: true },
     jobLimit:   { type: Number, required: true },
     applyLimit: { type: Number, default: 10 },  // -1 = unlimited

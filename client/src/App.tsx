@@ -12,6 +12,7 @@ import Profile from './pages/Profile';
 import OAuthCallback from './pages/OAuthCallback';
 import VerifyEmail from './pages/VerifyEmail';
 import ForgotPassword from './pages/ForgotPassword';
+import ScrollToTop from './components/ScrollToTop';
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -24,6 +25,8 @@ function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
+    <>
+    <ScrollToTop />
     <Routes>
       {/* Public */}
       <Route path="/" element={<Layout><Home /></Layout>} />
@@ -52,5 +55,6 @@ export default function App() {
         </Layout>
       } />
     </Routes>
+    </>
   );
 }

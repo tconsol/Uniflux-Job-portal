@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
+import ScrollToTop from './components/ScrollToTop';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -19,6 +20,8 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
+    <>
+    <ScrollToTop />
     <Routes>
       <Route path="/login" element={<Login />} />
 
@@ -79,5 +82,6 @@ export default function App() {
         }
       />
     </Routes>
+    </>
   );
 }

@@ -7,7 +7,7 @@ import StatCard from '../components/StatCard';
 import Badge from '../components/Badge';
 
 function fmt(n: number) {
-  return n >= 1000 ? `₹${(n / 1000).toFixed(1)}k` : `₹${n}`;
+  return n >= 1000 ? `$${(n / 1000).toFixed(1)}k` : `$${n}`;
 }
 
 export default function Dashboard() {
@@ -128,10 +128,10 @@ export default function Dashboard() {
                 tick={{ fontSize: 12, fill: '#6b7280' }}
                 axisLine={false}
                 tickLine={false}
-                tickFormatter={(v) => `₹${v}`}
+                tickFormatter={(v) => `$${v}`}
               />
               <Tooltip
-                formatter={(v: number) => [`₹${v}`, 'MRR']}
+                formatter={(v: number) => [`$${v}`, 'MRR']}
                 contentStyle={{ borderRadius: '12px', border: '1px solid #e5e7eb', boxShadow: 'none', fontSize: 12 }}
               />
               <Bar dataKey="mrr" fill="#10b981" radius={[6, 6, 0, 0]} />

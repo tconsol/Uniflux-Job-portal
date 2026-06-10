@@ -39,17 +39,27 @@ function mapJob(sj) {
 
 async function fetchAllJobs({ limit = 100, skip = 0, keyword, location, jobType, salaryMin, salaryMax, source } = {}) {
   const params = { limit, skip };
-  if (keyword)   params.keyword    = keyword;
-  if (location)  params.location   = location;
-  if (jobType)   params.job_type   = jobType;
-  if (salaryMin) params.salary_min = salaryMin;
-  if (salaryMax) params.salary_max = salaryMax;
-  if (source)    params.site       = source;
+  if (keyword)   params.keyword  = keyword;
+  if (location)  params.location = location;
+  if (jobType)   params.job_type = jobType;
+  if (source)    params.site     = source;
 
   const { data } = await axios.get(PUBLIC_JOBS_URL, { params, timeout: 20000 });
+  let jobs = (data.jobs || []).map(mapJob);
+
+  const minVal = salaryMin ? parseFloat(salaryMin) : null;
+  const maxVal = salaryMax ? parseFloat(salaryMax) : null;
+
+  if (minVal !== null) {
+    jobs = jobs.filter((j) => j.salaryMax !== null && j.salaryMax >= minVal);
+  }
+  if (maxVal !== null) {
+    jobs = jobs.filter((j) => j.salaryMin !== null && j.salaryMin <= maxVal);
+  }
+
   return {
-    total: data.total ?? 0,
-    jobs:  (data.jobs || []).map(mapJob),
+    total: minVal !== null || maxVal !== null ? jobs.length : (data.total ?? 0),
+    jobs,
   };
 }
 

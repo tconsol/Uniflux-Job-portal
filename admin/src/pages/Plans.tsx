@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, Pencil, Trash2, X, Loader2, Check } from 'lucide-react';
+import CustomSelect from '../components/CustomSelect';
 import { listPlans, createPlan, updatePlan, deletePlan } from '../api/admin.api';
 import type { Plan } from '../types';
 
 const EMPTY_PLAN: Partial<Plan> = {
-  slug: 'basic',
+  slug: 'free',
   name: '',
   jobLimit: 10,
   applyLimit: 10,
@@ -67,15 +68,16 @@ function PlanModal({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs text-gray-500 mb-1 block">Slug</label>
-              <select
-                value={form.slug}
-                onChange={(e) => set('slug', e.target.value as Plan['slug'])}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-              >
-                {['basic', 'standard', 'premium', 'elite'].map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
+              <CustomSelect
+                value={form.slug ?? 'free'}
+                onChange={(v) => set('slug', v as Plan['slug'])}
+                options={[
+                  { value: 'free',     label: 'free' },
+                  { value: 'standard', label: 'standard' },
+                  { value: 'premium',  label: 'premium' },
+                  { value: 'elite',    label: 'elite' },
+                ]}
+              />
             </div>
             <div>
               <label className="text-xs text-gray-500 mb-1 block">Display Name *</label>
@@ -111,7 +113,7 @@ function PlanModal({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">Monthly (₹)</label>
+              <label className="text-xs text-gray-500 mb-1 block">Monthly ($)</label>
               <input
                 type="number"
                 value={form.priceMonthly ?? 0}
@@ -120,7 +122,7 @@ function PlanModal({
               />
             </div>
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">Yearly (₹)</label>
+              <label className="text-xs text-gray-500 mb-1 block">Yearly ($)</label>
               <input
                 type="number"
                 value={form.priceYearly ?? 0}
@@ -257,7 +259,7 @@ export default function Plans() {
               </div>
 
               <div className="space-y-1 text-sm text-gray-600 mb-4">
-                <p>₹{plan.priceMonthly}/mo · ₹{plan.priceYearly}/yr</p>
+                <p>${plan.priceMonthly}/mo · ${plan.priceYearly}/yr</p>
                 <p>{plan.jobLimit === -1 ? 'Unlimited' : plan.jobLimit.toLocaleString()} jobs/day</p>
                 <p>{plan.applyLimit === -1 ? 'Unlimited' : (plan.applyLimit ?? 10).toLocaleString()} applies/period</p>
                 <p className="text-gray-400 text-xs">{plan.features.length} features</p>

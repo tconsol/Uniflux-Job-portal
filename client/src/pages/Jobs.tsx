@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Loader2, AlertCircle, RefreshCw, Zap, AlertTriangle, Info, X } from 'lucide-react';
 import JobCard from '../components/JobCard';
@@ -71,10 +71,35 @@ function toastLevel(pct: number): Toast['level'] {
   return 'info';
 }
 
+function paramsToFilters(params: URLSearchParams): JobFilters {
+  const f: JobFilters = { page: 1, limit: PAGE_SIZE };
+  if (params.get('page'))      f.page      = Number(params.get('page'));
+  if (params.get('keyword'))   f.keyword   = params.get('keyword')!;
+  if (params.get('location'))  f.location  = params.get('location')!;
+  if (params.get('jobType'))   f.jobType   = params.get('jobType')!;
+  if (params.get('source'))    f.source    = params.get('source')!;
+  if (params.get('salaryMin')) f.salaryMin = Number(params.get('salaryMin'));
+  if (params.get('salaryMax')) f.salaryMax = Number(params.get('salaryMax'));
+  return f;
+}
+
+function filtersToParams(f: JobFilters): Record<string, string> {
+  const p: Record<string, string> = {};
+  if (f.page && f.page > 1)  p.page      = String(f.page);
+  if (f.keyword)              p.keyword   = f.keyword;
+  if (f.location)             p.location  = f.location;
+  if (f.jobType)              p.jobType   = f.jobType;
+  if (f.source)               p.source    = f.source;
+  if (f.salaryMin)            p.salaryMin = String(f.salaryMin);
+  if (f.salaryMax)            p.salaryMax = String(f.salaryMax);
+  return p;
+}
+
 export default function Jobs() {
   const navigate    = useNavigate();
   const queryClient = useQueryClient();
-  const [filters, setFilters] = useState<JobFilters>({ page: 1, limit: PAGE_SIZE });
+  const [searchParams, setSearchParams] = useSearchParams();
+  const filters = paramsToFilters(searchParams);
 
   const { data, isLoading, isError, refetch } = useJobs(filters);
 
@@ -165,11 +190,11 @@ export default function Jobs() {
   const currentPage = filters.page ?? 1;
 
   function handleFilterChange(f: JobFilters) {
-    setFilters({ ...f, page: 1, limit: PAGE_SIZE });
+    setSearchParams(filtersToParams({ ...f, page: 1, limit: PAGE_SIZE }));
   }
 
   function handlePageChange(p: number) {
-    setFilters((f) => ({ ...f, page: p }));
+    setSearchParams(filtersToParams({ ...filters, page: p }));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 

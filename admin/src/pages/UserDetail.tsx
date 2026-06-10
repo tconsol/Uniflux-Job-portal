@@ -4,9 +4,19 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, User, CreditCard, Calendar, Loader2, Save } from 'lucide-react';
 import { getUserDetail, updateUserSubscription } from '../api/admin.api';
 import Badge from '../components/Badge';
+import CustomSelect from '../components/CustomSelect';
 
-const PLAN_OPTIONS = ['basic', 'standard', 'premium', 'elite'];
-const STATUS_OPTIONS = ['active', 'expired', 'inactive'];
+const PLAN_OPTIONS = [
+  { value: 'free',     label: 'Free' },
+  { value: 'standard', label: 'Standard' },
+  { value: 'premium',  label: 'Premium' },
+  { value: 'elite',    label: 'Elite' },
+];
+const STATUS_OPTIONS = [
+  { value: 'active',   label: 'Active' },
+  { value: 'expired',  label: 'Expired' },
+  { value: 'inactive', label: 'Inactive' },
+];
 
 export default function UserDetail() {
   const { id } = useParams<{ id: string }>();
@@ -171,29 +181,19 @@ export default function UserDetail() {
           <div className="flex items-end gap-3 flex-wrap">
             <div>
               <label className="block text-xs text-gray-500 mb-1">Plan</label>
-              <select
-                value={planSlug || subscription?.planSlug || 'basic'}
-                onChange={(e) => setPlanSlug(e.target.value)}
-                onFocus={initEdit}
-                className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-              >
-                {PLAN_OPTIONS.map((p) => (
-                  <option key={p} value={p}>{p}</option>
-                ))}
-              </select>
+              <CustomSelect
+                value={planSlug || subscription?.planSlug || 'free'}
+                onChange={(v) => { initEdit(); setPlanSlug(v); }}
+                options={PLAN_OPTIONS}
+              />
             </div>
             <div>
               <label className="block text-xs text-gray-500 mb-1">Status</label>
-              <select
+              <CustomSelect
                 value={status || subscription?.status || 'inactive'}
-                onChange={(e) => setStatus(e.target.value)}
-                onFocus={initEdit}
-                className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-              >
-                {STATUS_OPTIONS.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
+                onChange={(v) => { initEdit(); setStatus(v); }}
+                options={STATUS_OPTIONS}
+              />
             </div>
             <button
               onClick={handleSave}

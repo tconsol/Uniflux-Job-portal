@@ -2,8 +2,8 @@ const Subscription = require('../models/Subscription');
 const Plan = require('../models/Plan');
 
 // apply limits by plan slug when Plan doc not found
-const DEFAULT_APPLY_LIMITS = { basic: 10, standard: 100, premium: 1000, elite: -1 };
-const DEFAULT_JOB_LIMITS   = { basic: 10, standard: 100, premium: 1000, elite: -1 };
+const DEFAULT_APPLY_LIMITS = { free: 10, standard: 100, premium: 1000, elite: -1 };
+const DEFAULT_JOB_LIMITS   = { free: 10, standard: 100, premium: 1000, elite: -1 };
 
 async function attachSubscription(req, res, next) {
   try {
@@ -13,7 +13,7 @@ async function attachSubscription(req, res, next) {
     });
 
     if (!subscription) {
-      req.subscription = { planSlug: 'basic', jobLimit: 10, applyLimit: 10, subscription: null };
+      req.subscription = { planSlug: 'free', jobLimit: 10, applyLimit: 10, subscription: null };
       return next();
     }
 
@@ -26,7 +26,7 @@ async function attachSubscription(req, res, next) {
     };
     next();
   } catch (err) {
-    req.subscription = { planSlug: 'basic', jobLimit: 10, applyLimit: 10, subscription: null };
+    req.subscription = { planSlug: 'free', jobLimit: 10, applyLimit: 10, subscription: null };
     next();
   }
 }

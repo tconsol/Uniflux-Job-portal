@@ -6,7 +6,7 @@ import { useSubscription } from '../hooks/useBilling';
 import { updateProfile } from '../api/auth.api';
 
 const PLAN_COLORS: Record<string, string> = {
-  basic:    'bg-gray-100 text-gray-700 border-gray-200',
+  free:     'bg-gray-100 text-gray-700 border-gray-200',
   standard: 'bg-blue-50 text-blue-700 border-blue-200',
   premium:  'bg-purple-50 text-purple-700 border-purple-200',
   elite:    'bg-amber-50 text-amber-700 border-amber-200',
@@ -17,8 +17,8 @@ export default function Profile() {
   const { data: subData } = useSubscription();
   const subscription = subData?.subscription;
   const plan         = subData?.plan;
-  const planSlug     = subscription?.planSlug ?? 'basic';
-  const planStyle    = PLAN_COLORS[planSlug] ?? PLAN_COLORS.basic;
+  const planSlug     = subscription?.planSlug ?? 'free';
+  const planStyle    = PLAN_COLORS[planSlug] ?? PLAN_COLORS.free;
 
   // Name edit
   const [editingName, setEditingName]   = useState(false);
@@ -258,12 +258,14 @@ export default function Profile() {
               )}
             </div>
 
-            <Link
-              to="/plans"
-              className="block text-center bg-brand-600 hover:bg-brand-700 text-white py-2.5 rounded-xl text-sm font-semibold transition-colors"
-            >
-              {subscription?.status === 'active' ? 'Upgrade Plan' : 'View Plans'}
-            </Link>
+            {planSlug !== 'elite' && (
+              <Link
+                to="/plans"
+                className="block text-center bg-brand-600 hover:bg-brand-700 text-white py-2.5 rounded-xl text-sm font-semibold transition-colors"
+              >
+                {subscription?.status === 'active' && planSlug !== 'free' ? 'Upgrade Plan' : 'View Plans'}
+              </Link>
+            )}
           </div>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import { Search, X } from 'lucide-react';
+import CustomSelect from './CustomSelect';
 import type { JobFilters } from '../types';
 
 interface Props {
@@ -6,8 +7,24 @@ interface Props {
   onChange: (f: JobFilters) => void;
 }
 
-const JOB_TYPES = ['full-time', 'part-time', 'contract', 'freelance', 'internship'];
-const SOURCES    = ['indeed', 'linkedin', 'glassdoor', 'google', 'zip_recruiter', 'jsearch'];
+const JOB_TYPE_OPTIONS = [
+  { value: '', label: 'All job types' },
+  { value: 'full-time',  label: 'Full Time' },
+  { value: 'part-time',  label: 'Part Time' },
+  { value: 'contract',   label: 'Contract' },
+  { value: 'freelance',  label: 'Freelance' },
+  { value: 'internship', label: 'Internship' },
+];
+
+const SOURCE_OPTIONS = [
+  { value: '',             label: 'All sources' },
+  { value: 'indeed',       label: 'Indeed' },
+  { value: 'linkedin',     label: 'LinkedIn' },
+  { value: 'glassdoor',    label: 'Glassdoor' },
+  { value: 'google',       label: 'Google' },
+  { value: 'zip_recruiter',label: 'ZipRecruiter' },
+  { value: 'jsearch',      label: 'JSearch' },
+];
 
 export default function JobFiltersBar({ filters, onChange }: Props) {
   function set(key: keyof JobFilters, value: string | number | undefined) {
@@ -58,27 +75,19 @@ export default function JobFiltersBar({ filters, onChange }: Props) {
 
       {/* Row 2: job type, source, salary min, salary max */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        <select
+        <CustomSelect
           value={filters.jobType ?? ''}
-          onChange={(e) => set('jobType', e.target.value)}
-          className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white text-gray-700"
-        >
-          <option value="">All job types</option>
-          {JOB_TYPES.map((t) => (
-            <option key={t} value={t} className="capitalize">{t.replace('-', ' ')}</option>
-          ))}
-        </select>
+          onChange={(v) => set('jobType', v)}
+          options={JOB_TYPE_OPTIONS}
+          placeholder="All job types"
+        />
 
-        <select
+        <CustomSelect
           value={filters.source ?? ''}
-          onChange={(e) => set('source', e.target.value)}
-          className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white text-gray-700"
-        >
-          <option value="">All sources</option>
-          {SOURCES.map((s) => (
-            <option key={s} value={s} className="capitalize">{s.replace('_', ' ')}</option>
-          ))}
-        </select>
+          onChange={(v) => set('source', v)}
+          options={SOURCE_OPTIONS}
+          placeholder="All sources"
+        />
 
         <input
           type="number"

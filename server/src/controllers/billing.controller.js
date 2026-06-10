@@ -19,9 +19,10 @@ async function createOrder(req, res) {
     const result = await razorpayService.createOrder(req.user._id, planSlug);
     res.json(result);
   } catch (err) {
-    const status = ['Plan not found', 'Cannot purchase a free plan'].includes(err.message) ? 400 : 500;
+    const clientErrors = ['Plan not found', 'Cannot purchase the free plan', 'Cannot downgrade'];
+    const isClient = clientErrors.some((m) => err.message?.startsWith(m));
     console.error('[createOrder]', err.message, err.error ?? '');
-    res.status(status).json({ message: err.message || 'Payment initiation failed' });
+    res.status(isClient ? 400 : 500).json({ message: err.message || 'Payment initiation failed' });
   }
 }
 
@@ -45,7 +46,7 @@ async function verifyPayment(req, res) {
 async function currentSubscription(req, res) {
   try {
     const subscription = await Subscription.findOne({ userId: req.user._id });
-    if (!subscription) return res.json({ planSlug: 'basic', status: 'inactive' });
+    if (!subscription) return res.json({ planSlug: 'free', status: 'inactive' });
 
     const plan = await Plan.findOne({ slug: subscription.planSlug });
     res.json({ subscription, plan });

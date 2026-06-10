@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('googleapis').Auth;
 const User = require('../models/User');
 const { sendOtpEmail, sendPasswordResetEmail } = require('../services/email.service');
+const { activateFreePlan } = require('../services/razorpay.service');
 
 function generateTokens(userId) {
   const access = jwt.sign(
@@ -79,6 +80,7 @@ async function verifyOtp(req, res) {
     user.otp = null;
     user.otpExpiry = null;
     await user.save();
+    await activateFreePlan(user._id);
 
     const tokens = generateTokens(user._id);
     res.json({ message: 'Email verified', user: user.toJSON(), tokens });
@@ -194,6 +196,7 @@ async function googleCallback(req, res) {
         await user.save();
       } else {
         user = await User.create({ name, email, googleId, isEmailVerified: true });
+        await activateFreePlan(user._id);
       }
     }
 

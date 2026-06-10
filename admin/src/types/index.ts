@@ -11,7 +11,7 @@ export interface AdminUser {
 
 export interface Plan {
   _id: string;
-  slug: 'basic' | 'standard' | 'premium' | 'elite';
+  slug: 'free' | 'standard' | 'premium' | 'elite';
   name: string;
   jobLimit: number;
   applyLimit: number;
