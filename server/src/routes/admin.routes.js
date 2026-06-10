@@ -2,7 +2,7 @@ const router = require('express').Router();
 const { adminOnly } = require('../middleware/admin.middleware');
 const {
   listPlans, createPlan, updatePlan, deletePlan,
-  listUsers, getUserDetail, updateUserSubscription,
+  listUsers, getUserDetail, updateUserSubscription, deleteUser,
   getRevenueSummary,
 } = require('../controllers/admin.controller');
 
@@ -18,6 +18,7 @@ router.delete('/plans/:id', deletePlan);
 router.get('/users', listUsers);
 router.get('/users/:id', getUserDetail);
 router.put('/users/:id/subscription', updateUserSubscription);
+router.delete('/users/:id', deleteUser);
 
 // Revenue
 router.get('/revenue', getRevenueSummary);

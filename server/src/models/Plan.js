@@ -4,7 +4,8 @@ const planSchema = new mongoose.Schema(
   {
     slug: { type: String, required: true, unique: true, enum: ['basic', 'standard', 'premium', 'elite'] },
     name: { type: String, required: true },
-    jobLimit: { type: Number, required: true },
+    jobLimit:   { type: Number, required: true },
+    applyLimit: { type: Number, default: 10 },  // -1 = unlimited
     priceMonthly: { type: Number, required: true },
     priceYearly: { type: Number, default: null },
     razorpayPlanIdMonthly: { type: String, default: null },

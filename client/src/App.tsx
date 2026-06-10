@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Jobs from './pages/Jobs';
 import JobDetail from './pages/JobDetail';
+import Applications from './pages/Applications';
 import Plans from './pages/Plans';
 import Profile from './pages/Profile';
 import OAuthCallback from './pages/OAuthCallback';
@@ -35,6 +36,7 @@ export default function App() {
       <Route path="/jobs" element={<Layout><ProtectedRoute><Jobs /></ProtectedRoute></Layout>} />
       <Route path="/jobs/:id" element={<Layout><ProtectedRoute><JobDetail /></ProtectedRoute></Layout>} />
       <Route path="/profile" element={<Layout><ProtectedRoute><Profile /></ProtectedRoute></Layout>} />
+      <Route path="/applications" element={<Layout><ProtectedRoute><Applications /></ProtectedRoute></Layout>} />
 
       {/* 404 */}
       <Route path="*" element={

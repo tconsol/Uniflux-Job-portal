@@ -1,18 +1,34 @@
-const { fetchJobs } = require('../services/jobs.service');
+const { fetchAllJobs } = require('../services/jobs.service');
+const UserApply = require('../models/UserApply');
 const { addConnection, removeConnection } = require('../services/sse.service');
 
 async function listJobs(req, res) {
   try {
-    const { planSlug, jobLimit } = req.subscription;
-    const { page = 1, limit = 20, keyword, location, jobType } = req.query;
+    const { planSlug, applyLimit, subscription } = req.subscription;
+    const { page = 1, limit = 100, keyword, location, jobType, salaryMin, salaryMax, source } = req.query;
 
     const pageNum  = parseInt(page);
-    const limitNum = Math.min(parseInt(limit), jobLimit);
+    const limitNum = Math.min(parseInt(limit) || 100, 100);
     const skip     = (pageNum - 1) * limitNum;
 
-    const { jobs, total } = await fetchJobs({ limit: limitNum, skip, keyword, location, jobType });
+    const [{ jobs, total }, applies] = await Promise.all([
+      fetchAllJobs({ limit: limitNum, skip, keyword, location, jobType, salaryMin, salaryMax, source }),
+      UserApply.find({ userId: req.user._id }).select('jobId appliedAt').lean(),
+    ]);
 
-    res.json({ jobs, total, page: pageNum, limit: limitNum, planSlug, jobLimit });
+    const since = subscription?.planActivatedAt ? new Date(subscription.planActivatedAt) : null;
+    const periodApplies = since ? applies.filter((a) => new Date(a.appliedAt) >= since) : applies;
+
+    res.json({
+      jobs,
+      total,
+      page: pageNum,
+      limit: limitNum,
+      planSlug,
+      applyLimit,
+      appliesUsed:  periodApplies.length,
+      appliedJobIds: applies.map((a) => a.jobId),
+    });
   } catch (err) {
     console.error('[listJobs]', err.message);
     res.status(500).json({ message: err.message });
@@ -21,7 +37,7 @@ async function listJobs(req, res) {
 
 async function getJob(req, res) {
   try {
-    const { jobs } = await fetchJobs({ limit: 100 });
+    const { jobs } = await fetchAllJobs({ limit: 100 });
     const job = jobs.find((j) => j._id === req.params.id);
     if (!job) return res.status(404).json({ message: 'Job not found' });
     res.json({ job });
@@ -40,17 +56,10 @@ async function sseStream(req, res) {
 
   const userId = req.user._id.toString();
   addConnection(userId, res);
-
   res.write(': connected\n\n');
 
-  const keepAlive = setInterval(() => {
-    res.write(': keep-alive\n\n');
-  }, 25000);
-
-  req.on('close', () => {
-    clearInterval(keepAlive);
-    removeConnection(userId, res);
-  });
+  const keepAlive = setInterval(() => res.write(': keep-alive\n\n'), 25000);
+  req.on('close', () => { clearInterval(keepAlive); removeConnection(userId, res); });
 }
 
 module.exports = { listJobs, getJob, sseStream };

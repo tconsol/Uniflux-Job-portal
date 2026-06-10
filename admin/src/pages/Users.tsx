@@ -1,18 +1,73 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Search, ChevronLeft, ChevronRight, Loader2, ExternalLink } from 'lucide-react';
-import { getUsers } from '../api/admin.api';
+import { Search, ChevronLeft, ChevronRight, Loader2, ExternalLink, Trash2, AlertTriangle, X } from 'lucide-react';
+import { getUsers, deleteUser } from '../api/admin.api';
 import Badge from '../components/Badge';
 
+interface DeleteModalProps {
+  userName: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+  loading: boolean;
+}
+
+function DeleteModal({ userName, onConfirm, onCancel, loading }: DeleteModalProps) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+        <div className="flex items-start justify-between gap-3 mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+              <AlertTriangle className="w-5 h-5 text-red-600" />
+            </div>
+            <div>
+              <h3 className="font-bold text-gray-900">Delete User</h3>
+              <p className="text-sm text-gray-500 mt-0.5">This action cannot be undone.</p>
+            </div>
+          </div>
+          <button onClick={onCancel} className="text-gray-400 hover:text-gray-600">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <p className="text-sm text-gray-600 mb-5">
+          Are you sure you want to delete <strong>{userName}</strong>? This will also delete their subscription and apply history.
+        </p>
+
+        <div className="flex gap-3">
+          <button
+            onClick={onCancel}
+            className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={loading}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium transition-colors disabled:opacity-60"
+          >
+            {loading
+              ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              : <><Trash2 className="w-4 h-4" /> Delete</>}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Users() {
-  const [page, setPage] = useState(1);
+  const queryClient = useQueryClient();
+  const [page, setPage]     = useState(1);
   const [search, setSearch] = useState('');
-  const [query, setQuery] = useState('');
+  const [query, setQuery]   = useState('');
+  const [deleting, setDeleting]     = useState<{ id: string; name: string } | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['admin-users', page, query],
-    queryFn: () => getUsers(page, query),
+    queryFn:  () => getUsers(page, query),
     staleTime: 1000 * 30,
   });
 
@@ -22,8 +77,31 @@ export default function Users() {
     setPage(1);
   }
 
+  async function handleDelete() {
+    if (!deleting) return;
+    setDeleteLoading(true);
+    try {
+      await deleteUser(deleting.id);
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      setDeleting(null);
+    } catch (err: any) {
+      alert(err?.response?.data?.message ?? 'Failed to delete user');
+    } finally {
+      setDeleteLoading(false);
+    }
+  }
+
   return (
     <div className="p-6 space-y-5">
+      {deleting && (
+        <DeleteModal
+          userName={deleting.name}
+          onConfirm={handleDelete}
+          onCancel={() => setDeleting(null)}
+          loading={deleteLoading}
+        />
+      )}
+
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-gray-900">Users</h1>
         {data && <span className="text-sm text-gray-500">{data.total.toLocaleString()} total</span>}
@@ -44,11 +122,7 @@ export default function Users() {
           Search
         </button>
         {query && (
-          <button
-            type="button"
-            onClick={() => { setSearch(''); setQuery(''); setPage(1); }}
-            className="text-gray-500 hover:text-gray-700 text-sm"
-          >
+          <button type="button" onClick={() => { setSearch(''); setQuery(''); setPage(1); }} className="text-gray-500 hover:text-gray-700 text-sm">
             Clear
           </button>
         )}
@@ -96,13 +170,23 @@ export default function Users() {
                       <td className="px-4 py-3 text-gray-400">
                         {new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                       </td>
-                      <td className="px-4 py-3 text-right">
-                        <Link
-                          to={`/users/${user._id}`}
-                          className="inline-flex items-center gap-1 text-brand-600 hover:text-brand-700 text-xs font-medium"
-                        >
-                          View <ExternalLink className="w-3 h-3" />
-                        </Link>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-3">
+                          <Link
+                            to={`/users/${user._id}`}
+                            className="inline-flex items-center gap-1 text-brand-600 hover:text-brand-700 text-xs font-medium"
+                          >
+                            View <ExternalLink className="w-3 h-3" />
+                          </Link>
+                          {!user.isAdmin && (
+                            <button
+                              onClick={() => setDeleting({ id: user._id, name: user.name })}
+                              className="inline-flex items-center gap-1 text-red-500 hover:text-red-700 text-xs font-medium transition-colors"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" /> Delete
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -117,9 +201,7 @@ export default function Users() {
             {/* Pagination */}
             {data.totalPages > 1 && (
               <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
-                <span className="text-xs text-gray-500">
-                  Page {data.page} of {data.totalPages}
-                </span>
+                <span className="text-xs text-gray-500">Page {data.page} of {data.totalPages}</span>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setPage((p) => Math.max(1, p - 1))}

@@ -23,6 +23,10 @@ export async function updateUserSubscription(userId: string, planSlug: string, s
   return data;
 }
 
+export async function deleteUser(userId: string): Promise<void> {
+  await api.delete(`/admin/users/${userId}`);
+}
+
 // Plans
 export async function listPlans(): Promise<Plan[]> {
   const { data } = await api.get<{ plans: Plan[] }>('/admin/plans');

@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { Search, SlidersHorizontal, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import type { JobFilters } from '../types';
 
 interface Props {
@@ -8,93 +7,95 @@ interface Props {
 }
 
 const JOB_TYPES = ['full-time', 'part-time', 'contract', 'freelance', 'internship'];
+const SOURCES    = ['indeed', 'linkedin', 'glassdoor', 'google', 'zip_recruiter', 'jsearch'];
 
 export default function JobFiltersBar({ filters, onChange }: Props) {
-  const [showAdvanced, setShowAdvanced] = useState(false);
-
   function set(key: keyof JobFilters, value: string | number | undefined) {
-    onChange({ ...filters, [key]: value || undefined, page: 1 });
+    onChange({ ...filters, [key]: value || undefined });
   }
 
   function clearAll() {
-    onChange({ page: 1 });
+    onChange({});
   }
 
-  const hasFilters = !!(filters.location || filters.jobType || filters.salaryMin || filters.company || filters.skills);
+  const hasFilters = !!(
+    filters.keyword || filters.location || filters.jobType ||
+    filters.salaryMin || filters.salaryMax || filters.source
+  );
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-4 space-y-3">
-      {/* Search bar */}
+      {/* Row 1: keyword + location */}
       <div className="flex gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
-            placeholder="Company name..."
-            value={filters.company ?? ''}
-            onChange={(e) => set('company', e.target.value)}
+            placeholder="Job title, keyword..."
+            value={filters.keyword ?? ''}
+            onChange={(e) => set('keyword', e.target.value)}
             className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
           />
         </div>
-        <button
-          onClick={() => setShowAdvanced(!showAdvanced)}
-          className={`flex items-center gap-2 px-4 py-2.5 border rounded-xl text-sm font-medium transition-colors ${
-            showAdvanced ? 'bg-brand-50 border-brand-300 text-brand-700' : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-          }`}
-        >
-          <SlidersHorizontal className="w-4 h-4" />
-          Filters
-          {hasFilters && <span className="w-2 h-2 bg-brand-600 rounded-full" />}
-        </button>
+        <div className="relative flex-1">
+          <input
+            type="text"
+            placeholder="Location..."
+            value={filters.location ?? ''}
+            onChange={(e) => set('location', e.target.value)}
+            className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+          />
+        </div>
         {hasFilters && (
           <button
             onClick={clearAll}
-            className="flex items-center gap-1 px-3 py-2.5 text-sm text-red-500 hover:bg-red-50 border border-red-200 rounded-xl transition-colors"
+            className="flex items-center gap-1 px-3 py-2.5 text-sm text-red-500 hover:bg-red-50 border border-red-200 rounded-xl transition-colors whitespace-nowrap"
           >
             <X className="w-4 h-4" /> Clear
           </button>
         )}
       </div>
 
-      {/* Advanced filters */}
-      {showAdvanced && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-gray-100">
-          <input
-            type="text"
-            placeholder="Location..."
-            value={filters.location ?? ''}
-            onChange={(e) => set('location', e.target.value)}
-            className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-          />
+      {/* Row 2: job type, source, salary min, salary max */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <select
+          value={filters.jobType ?? ''}
+          onChange={(e) => set('jobType', e.target.value)}
+          className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white text-gray-700"
+        >
+          <option value="">All job types</option>
+          {JOB_TYPES.map((t) => (
+            <option key={t} value={t} className="capitalize">{t.replace('-', ' ')}</option>
+          ))}
+        </select>
 
-          <select
-            value={filters.jobType ?? ''}
-            onChange={(e) => set('jobType', e.target.value)}
-            className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
-          >
-            <option value="">All types</option>
-            {JOB_TYPES.map((t) => (
-              <option key={t} value={t} className="capitalize">{t}</option>
-            ))}
-          </select>
+        <select
+          value={filters.source ?? ''}
+          onChange={(e) => set('source', e.target.value)}
+          className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white text-gray-700"
+        >
+          <option value="">All sources</option>
+          {SOURCES.map((s) => (
+            <option key={s} value={s} className="capitalize">{s.replace('_', ' ')}</option>
+          ))}
+        </select>
 
-          <input
-            type="number"
-            placeholder="Min salary (USD)..."
-            value={filters.salaryMin ?? ''}
-            onChange={(e) => set('salaryMin', e.target.value ? parseInt(e.target.value) : undefined)}
-            className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-          />
+        <input
+          type="number"
+          placeholder="Min salary ($)"
+          value={filters.salaryMin ?? ''}
+          onChange={(e) => set('salaryMin', e.target.value ? parseInt(e.target.value) : undefined)}
+          className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+        />
 
-          <input
-            type="text"
-            placeholder="Skills (comma-separated)..."
-            value={filters.skills ?? ''}
-            onChange={(e) => set('skills', e.target.value)}
-            className="sm:col-span-3 px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-          />
-        </div>
-      )}
+        <input
+          type="number"
+          placeholder="Max salary ($)"
+          value={filters.salaryMax ?? ''}
+          onChange={(e) => set('salaryMax', e.target.value ? parseInt(e.target.value) : undefined)}
+          className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+        />
+      </div>
     </div>
   );
 }

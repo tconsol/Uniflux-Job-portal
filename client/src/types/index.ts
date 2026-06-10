@@ -23,6 +23,7 @@ export interface Plan {
   slug: 'basic' | 'standard' | 'premium' | 'elite';
   name: string;
   jobLimit: number;
+  applyLimit: number;
   priceMonthly: number;
   priceYearly?: number;
   razorpayPlanIdMonthly?: string;
@@ -63,7 +64,9 @@ export interface JobsResponse {
   page: number;
   limit: number;
   planSlug: string;
-  jobLimit: number;
+  applyLimit: number;
+  appliesUsed: number;
+  appliedJobIds: string[];
 }
 
 export interface AuthTokens {
@@ -72,11 +75,12 @@ export interface AuthTokens {
 }
 
 export interface JobFilters {
+  keyword?: string;
   location?: string;
   jobType?: string;
   salaryMin?: number;
-  company?: string;
-  skills?: string;
+  salaryMax?: number;
+  source?: string;
   page?: number;
   limit?: number;
 }

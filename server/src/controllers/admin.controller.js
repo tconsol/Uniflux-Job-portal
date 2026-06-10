@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const Plan = require('../models/Plan');
 const Subscription = require('../models/Subscription');
+const UserApply = require('../models/UserApply');
 // ── Plans ────────────────────────────────────────────────────────────────────
 
 async function listPlans(req, res) {
@@ -146,8 +147,28 @@ async function getRevenueSummary(req, res) {
   }
 }
 
+async function deleteUser(req, res) {
+  try {
+    const { id } = req.params;
+    const user = await User.findById(id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (user.isAdmin) return res.status(403).json({ message: 'Cannot delete an admin user' });
+
+    await Promise.all([
+      User.findByIdAndDelete(id),
+      Subscription.deleteMany({ userId: id }),
+      UserApply.deleteMany({ userId: id }),
+    ]);
+
+    res.json({ message: 'User deleted' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+}
+
 module.exports = {
   listPlans, createPlan, updatePlan, deletePlan,
   listUsers, getUserDetail, updateUserSubscription,
+  deleteUser,
   getRevenueSummary,
 };
