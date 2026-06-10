@@ -78,6 +78,7 @@ export interface JobFilters {
   keyword?: string;
   location?: string;
   jobType?: string;
+  salaryRange?: string;
   salaryMin?: number;
   salaryMax?: number;
   source?: string;

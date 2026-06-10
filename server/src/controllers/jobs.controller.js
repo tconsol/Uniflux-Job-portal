@@ -5,14 +5,14 @@ const { addConnection, removeConnection } = require('../services/sse.service');
 async function listJobs(req, res) {
   try {
     const { planSlug, applyLimit, subscription } = req.subscription;
-    const { page = 1, limit = 100, keyword, location, jobType, salaryMin, salaryMax, source } = req.query;
+    const { page = 1, limit = 100, keyword, location, jobType, source, salaryMin, salaryMax } = req.query;
 
     const pageNum  = parseInt(page);
     const limitNum = Math.min(parseInt(limit) || 100, 100);
     const skip     = (pageNum - 1) * limitNum;
 
     const [{ jobs, total }, applies] = await Promise.all([
-      fetchAllJobs({ limit: limitNum, skip, keyword, location, jobType, salaryMin, salaryMax, source }),
+      fetchAllJobs({ limit: limitNum, skip, keyword, location, jobType, source, salaryMin, salaryMax }),
       UserApply.find({ userId: req.user._id }).select('jobId appliedAt').lean(),
     ]);
 

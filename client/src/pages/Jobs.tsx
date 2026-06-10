@@ -73,26 +73,31 @@ function toastLevel(pct: number): Toast['level'] {
 
 function paramsToFilters(params: URLSearchParams): JobFilters {
   const f: JobFilters = { page: 1, limit: PAGE_SIZE };
-  if (params.get('page'))      f.page      = Number(params.get('page'));
-  if (params.get('keyword'))   f.keyword   = params.get('keyword')!;
-  if (params.get('location'))  f.location  = params.get('location')!;
-  if (params.get('jobType'))   f.jobType   = params.get('jobType')!;
-  if (params.get('source'))    f.source    = params.get('source')!;
-  if (params.get('salaryMin')) f.salaryMin = Number(params.get('salaryMin'));
-  if (params.get('salaryMax')) f.salaryMax = Number(params.get('salaryMax'));
+  if (params.get('page'))        f.page        = Number(params.get('page'));
+  if (params.get('keyword'))     f.keyword     = params.get('keyword')!;
+  if (params.get('location'))    f.location    = params.get('location')!;
+  if (params.get('jobType'))     f.jobType     = params.get('jobType')!;
+  if (params.get('source'))      f.source      = params.get('source')!;
+  if (params.get('salaryRange')) f.salaryRange = params.get('salaryRange')!;
   return f;
 }
 
 function filtersToParams(f: JobFilters): Record<string, string> {
   const p: Record<string, string> = {};
-  if (f.page && f.page > 1)  p.page      = String(f.page);
-  if (f.keyword)              p.keyword   = f.keyword;
-  if (f.location)             p.location  = f.location;
-  if (f.jobType)              p.jobType   = f.jobType;
-  if (f.source)               p.source    = f.source;
-  if (f.salaryMin)            p.salaryMin = String(f.salaryMin);
-  if (f.salaryMax)            p.salaryMax = String(f.salaryMax);
+  if (f.page && f.page > 1)  p.page        = String(f.page);
+  if (f.keyword)              p.keyword     = f.keyword;
+  if (f.location)             p.location    = f.location;
+  if (f.jobType)              p.jobType     = f.jobType;
+  if (f.source)               p.source      = f.source;
+  if (f.salaryRange)          p.salaryRange = f.salaryRange;
   return p;
+}
+
+function salaryRangeToParams(salaryRange?: string): { salaryMin?: number; salaryMax?: number } {
+  if (!salaryRange) return {};
+  if (salaryRange === '500+') return { salaryMin: 500000 };
+  const [loStr, hiStr] = salaryRange.split('-');
+  return { salaryMin: parseInt(loStr) * 1000, salaryMax: parseInt(hiStr) * 1000 };
 }
 
 export default function Jobs() {
@@ -101,7 +106,10 @@ export default function Jobs() {
   const [searchParams, setSearchParams] = useSearchParams();
   const filters = paramsToFilters(searchParams);
 
-  const { data, isLoading, isError, refetch } = useJobs(filters);
+  // convert salaryRange → salaryMin/salaryMax for marketplace API
+  const { salaryRange, ...rest } = filters;
+  const apiFilters = { ...rest, ...salaryRangeToParams(salaryRange) };
+  const { data, isLoading, isError, refetch } = useJobs(apiFilters);
 
   useSSE({
     onJobUpdate: useCallback(() => {
@@ -186,6 +194,7 @@ export default function Jobs() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }
 
+  const displayedJobs = data?.jobs ?? [];
   const totalPages  = data ? Math.ceil(data.total / PAGE_SIZE) : 0;
   const currentPage = filters.page ?? 1;
 
@@ -305,14 +314,14 @@ export default function Jobs() {
               Retry
             </button>
           </div>
-        ) : !data?.jobs.length ? (
+        ) : !displayedJobs.length ? (
           <div className="text-center py-20">
             <p className="text-gray-500">No jobs match your filters.</p>
           </div>
         ) : (
           <>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {data.jobs.map((job) => (
+              {displayedJobs.map((job) => (
                 <JobCard
                   key={job._id}
                   job={job}

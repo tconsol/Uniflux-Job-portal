@@ -1,4 +1,4 @@
-import { Search, X } from 'lucide-react';
+import { Search, X, Clock } from 'lucide-react';
 import CustomSelect from './CustomSelect';
 import type { JobFilters } from '../types';
 
@@ -6,6 +6,16 @@ interface Props {
   filters: JobFilters;
   onChange: (f: JobFilters) => void;
 }
+
+const SALARY_RANGE_OPTIONS = [
+  { value: '',        label: 'All salaries' },
+  { value: '0-100',   label: '$0k – $100k' },
+  { value: '100-200', label: '$100k – $200k' },
+  { value: '200-300', label: '$200k – $300k' },
+  { value: '300-400', label: '$300k – $400k' },
+  { value: '400-500', label: '$400k – $500k' },
+  { value: '500+',    label: '$500k+' },
+];
 
 const JOB_TYPE_OPTIONS = [
   { value: '', label: 'All job types' },
@@ -27,7 +37,7 @@ const SOURCE_OPTIONS = [
 ];
 
 export default function JobFiltersBar({ filters, onChange }: Props) {
-  function set(key: keyof JobFilters, value: string | number | undefined) {
+  function set(key: keyof JobFilters, value: string | undefined) {
     onChange({ ...filters, [key]: value || undefined });
   }
 
@@ -35,10 +45,7 @@ export default function JobFiltersBar({ filters, onChange }: Props) {
     onChange({});
   }
 
-  const hasFilters = !!(
-    filters.keyword || filters.location || filters.jobType ||
-    filters.salaryMin || filters.salaryMax || filters.source
-  );
+  const hasFilters = !!(filters.keyword || filters.location || filters.jobType || filters.source);
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-4 space-y-3">
@@ -73,8 +80,8 @@ export default function JobFiltersBar({ filters, onChange }: Props) {
         )}
       </div>
 
-      {/* Row 2: job type, source, salary min, salary max */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      {/* Row 2: job type, source, salary range */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
         <CustomSelect
           value={filters.jobType ?? ''}
           onChange={(v) => set('jobType', v)}
@@ -89,21 +96,17 @@ export default function JobFiltersBar({ filters, onChange }: Props) {
           placeholder="All sources"
         />
 
-        <input
-          type="number"
-          placeholder="Min salary ($)"
-          value={filters.salaryMin ?? ''}
-          onChange={(e) => set('salaryMin', e.target.value ? parseInt(e.target.value) : undefined)}
-          className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-        />
-
-        <input
-          type="number"
-          placeholder="Max salary ($)"
-          value={filters.salaryMax ?? ''}
-          onChange={(e) => set('salaryMax', e.target.value ? parseInt(e.target.value) : undefined)}
-          className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-        />
+        <div className="relative group">
+          <div className="flex items-center gap-2 px-3 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-400 bg-gray-50 cursor-not-allowed select-none">
+            <Clock className="w-4 h-4 flex-shrink-0" />
+            <span>Salary filter</span>
+            <span className="ml-auto text-xs bg-amber-100 text-amber-600 font-medium px-1.5 py-0.5 rounded-full">Soon</span>
+          </div>
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+            Salary filter coming soon
+            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+          </div>
+        </div>
       </div>
     </div>
   );
