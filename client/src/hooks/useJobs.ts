@@ -1,12 +1,18 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getJobs, getJob, getJobCount } from '../api/jobs.api';
+import { getJobs, getJob, getJobCount, getWeekTotal } from '../api/jobs.api';
 import type { Job, JobsResponse } from '../types';
 
 export function useJobs() {
   return useQuery({
     queryKey: ['jobs'],
     queryFn:  () => getJobs(),
-    staleTime: 5 * 60 * 1000, // 5 min — data rarely changes mid-session
+    staleTime: 5 * 60 * 1000,
+    // Poll every 3s until background fetch on server completes (> 1000 jobs in cache)
+    refetchInterval: (query) => {
+      const jobs = (query.state.data as JobsResponse | undefined)?.jobs;
+      if (!jobs || jobs.length <= 1000) return 3000;
+      return false;
+    },
   });
 }
 
@@ -14,7 +20,15 @@ export function useJobCount() {
   return useQuery({
     queryKey: ['job-count'],
     queryFn:  () => getJobCount(),
-    staleTime: 10 * 60 * 1000, // 10 min
+    staleTime: 10 * 60 * 1000,
+  });
+}
+
+export function useWeekTotal() {
+  return useQuery({
+    queryKey: ['week-total'],
+    queryFn:  () => getWeekTotal(),
+    staleTime: 5 * 60 * 1000,
   });
 }
 

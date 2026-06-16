@@ -6,6 +6,11 @@ export async function getJobCount(): Promise<number> {
   return data.total ?? 0;
 }
 
+export async function getWeekTotal(): Promise<number> {
+  const { data } = await api.get<{ total: number }>('/jobs/week-total');
+  return data.total ?? 0;
+}
+
 export async function getJobs(filters: JobFilters = {}) {
   const params = new URLSearchParams();
   Object.entries(filters).forEach(([k, v]) => { if (v !== undefined && v !== '') params.set(k, String(v)); });

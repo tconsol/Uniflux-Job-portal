@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Loader2, AlertCircle, RefreshCw, Zap, AlertTriangle, Info, X } from 'lucide-react';
 import JobCard from '../components/JobCard';
 import JobFiltersBar from '../components/JobFilters';
-import { useJobs, useJobCount } from '../hooks/useJobs';
+import { useJobs, useJobCount, useWeekTotal } from '../hooks/useJobs';
 import { useSSE } from '../hooks/useSSE';
 import type { Job, JobFilters } from '../types';
 
@@ -120,6 +120,7 @@ export default function Jobs() {
   // One backend call — get all jobs, cache for 5 min. No filter params sent.
   const { data, isLoading, isError, refetch } = useJobs();
   const { data: totalJobCount } = useJobCount();
+  const { data: weekTotal }     = useWeekTotal();
 
   useSSE({
     onJobUpdate: useCallback(() => {
@@ -217,7 +218,13 @@ export default function Jobs() {
   }), [allJobs, jobType, kw, loc]);
 
   // ── client-side pagination ────────────────────────────────────────────
-  const totalPages    = Math.ceil(filteredJobs.length / DISPLAY_SIZE) || 1;
+  // No filters → use weekTotal (instant, even before all jobs load)
+  // Filters active → use actual filtered count
+  const hasFilters = !!(kw || loc || jobType);
+  const knownTotal = hasFilters
+    ? filteredJobs.length
+    : Math.max(weekTotal ?? 0, filteredJobs.length);
+  const totalPages    = Math.ceil(knownTotal / DISPLAY_SIZE) || 1;
   const safePage      = Math.min(Math.max(1, page), totalPages);
   const displayedJobs = filteredJobs.slice((safePage - 1) * DISPLAY_SIZE, safePage * DISPLAY_SIZE);
 
@@ -333,8 +340,21 @@ export default function Jobs() {
 
         {/* Content */}
         {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 text-brand-600 animate-spin" />
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <div key={i} className="bg-white border border-gray-200 rounded-2xl p-5 animate-pulse">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-8 h-8 bg-gray-200 rounded-lg" />
+                  <div className="h-3 bg-gray-200 rounded w-24" />
+                </div>
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
+                <div className="h-3 bg-gray-200 rounded w-1/2 mb-4" />
+                <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100">
+                  <div className="h-5 bg-gray-200 rounded-full w-16" />
+                  <div className="h-5 bg-gray-200 rounded-full w-14" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : isError ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -349,33 +369,29 @@ export default function Jobs() {
             <p className="text-gray-500">No jobs match your filters.</p>
           </div>
         ) : (
-          <>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {displayedJobs.map((job) => (
-                <JobCard
-                  key={job._id}
-                  job={job}
-                  hasApplied={appliedSet.has(job._id)}
-                  isLocked={limitReached && !appliedSet.has(job._id)}
-                  applyLimit={applyLimit}
-                  appliesUsed={appliesUsed}
-                  onApplied={handleApplied}
-                  onClick={() => navigate(`/jobs/${job._id}`)}
-                />
-              ))}
-            </div>
-          </>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {displayedJobs.map((job) => (
+              <JobCard
+                key={job._id}
+                job={job}
+                hasApplied={appliedSet.has(job._id)}
+                isLocked={limitReached && !appliedSet.has(job._id)}
+                applyLimit={applyLimit}
+                appliesUsed={appliesUsed}
+                onApplied={handleApplied}
+                onClick={() => navigate(`/jobs/${job._id}`)}
+              />
+            ))}
+          </div>
         )}
       </div>
 
-      {/* Floating pill pagination */}
-      {totalPages > 1 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
-          <div className="bg-brand-600 backdrop-blur-md shadow-2xl rounded-full px-6 py-3">
-            <Pagination current={safePage} total={totalPages} onChange={handlePageChange} />
-          </div>
+      {/* Floating pill pagination — always visible */}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
+        <div className="bg-brand-600 backdrop-blur-md shadow-2xl rounded-full px-6 py-3">
+          <Pagination current={safePage} total={totalPages} onChange={handlePageChange} />
         </div>
-      )}
+      </div>
     </div>
   );
 }

@@ -118,4 +118,13 @@ async function fetchJobCount() {
   return data.total ?? 0;
 }
 
-module.exports = { fetchJobs, fetchJobCount };
+// Fast: counts endpoint with week filter — returns total immediately
+async function fetchWeekTotal() {
+  const { data } = await axios.get(COUNTS_URL, {
+    params: { date_posted: 'week' },
+    timeout: 10000,
+  });
+  return data.total ?? 0;
+}
+
+module.exports = { fetchJobs, fetchJobCount, fetchWeekTotal };

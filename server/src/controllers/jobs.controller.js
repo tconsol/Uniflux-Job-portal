@@ -1,4 +1,4 @@
-const { fetchJobs, fetchJobCount } = require('../services/jobs.service');
+const { fetchJobs, fetchJobCount, fetchWeekTotal } = require('../services/jobs.service');
 const UserApply = require('../models/UserApply');
 const { addConnection, removeConnection } = require('../services/sse.service');
 
@@ -65,4 +65,14 @@ async function getJobCount(req, res) {
   }
 }
 
-module.exports = { listJobs, getJob, sseStream, getJobCount };
+async function getWeekTotal(req, res) {
+  try {
+    const total = await fetchWeekTotal();
+    res.json({ total });
+  } catch (err) {
+    console.error('[getWeekTotal]', err.message);
+    res.status(500).json({ message: err.message });
+  }
+}
+
+module.exports = { listJobs, getJob, sseStream, getJobCount, getWeekTotal };
