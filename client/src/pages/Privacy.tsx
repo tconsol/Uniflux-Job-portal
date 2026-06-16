@@ -6,13 +6,13 @@ const LAST_UPDATED = 'June 10, 2026';
 const SECTIONS = [
   {
     title: '1. Information We Collect',
-    content: `We collect the following types of information when you use Uniflux:
+    content: `We collect the following types of information when you use Jobwalkers:
 
 • Account Information: Your name, email address, and password (hashed) when you register. If you sign in with Google, we receive your name, email, and Google profile picture.
 
 • Usage Data: Pages visited, jobs viewed, jobs applied to, filters used, and session duration — collected to improve our service.
 
-• Payment Information: When you subscribe to a paid plan, payment is processed by Razorpay. Uniflux does not store your card details; we only receive a payment confirmation and transaction ID from Razorpay.
+• Payment Information: When you subscribe to a paid plan, payment is processed by Razorpay. Jobwalkers does not store your card details; we only receive a payment confirmation and transaction ID from Razorpay.
 
 • Device & Technical Data: IP address, browser type, device type, and operating system — collected automatically via server logs.`,
   },
@@ -20,7 +20,7 @@ const SECTIONS = [
     title: '2. How We Use Your Information',
     content: `We use your information to:
 
-• Provide, operate, and maintain the Uniflux platform
+• Provide, operate, and maintain the Jobwalkers platform
 • Authenticate your identity and secure your account
 • Process subscription payments and manage plan access
 • Track your job applications and apply limit usage
@@ -30,7 +30,7 @@ const SECTIONS = [
   },
   {
     title: '3. Information We Do Not Collect or Share',
-    content: `Uniflux does not:
+    content: `Jobwalkers does not:
 
 • Sell your personal data to third parties
 • Share your information with employers or job platforms
@@ -40,11 +40,11 @@ const SECTIONS = [
   },
   {
     title: '4. Job Application Data',
-    content: `When you apply to a job through Uniflux, we record the job ID, title, company, and the timestamp of your application for tracking purposes. Clicking "Apply" redirects you to the employer's external platform. Any information you submit to that platform is governed by their own privacy policy. Uniflux has no visibility into or control over data submitted to third-party employers.`,
+    content: `When you apply to a job through Jobwalkers, we record the job ID, title, company, and the timestamp of your application for tracking purposes. Clicking "Apply" redirects you to the employer's external platform. Any information you submit to that platform is governed by their own privacy policy. Jobwalkers has no visibility into or control over data submitted to third-party employers.`,
   },
   {
     title: '5. Cookies & Local Storage',
-    content: `Uniflux uses browser localStorage to store authentication tokens (JWT) for session management. We do not use advertising cookies or third-party tracking cookies. We may use essential session cookies required for the platform to function. You can clear localStorage via your browser settings, which will log you out of the platform.`,
+    content: `Jobwalkers uses browser localStorage to store authentication tokens (JWT) for session management. We do not use advertising cookies or third-party tracking cookies. We may use essential session cookies required for the platform to function. You can clear localStorage via your browser settings, which will log you out of the platform.`,
   },
   {
     title: '6. Data Retention',
@@ -63,7 +63,7 @@ No method of transmission over the internet is 100% secure. We cannot guarantee 
   },
   {
     title: '8. Third-Party Services',
-    content: `Uniflux integrates with the following third-party services:
+    content: `Jobwalkers integrates with the following third-party services:
 
 • Google OAuth — for social login (governed by Google's Privacy Policy)
 • Razorpay — for payment processing (governed by Razorpay's Privacy Policy)
@@ -73,7 +73,7 @@ These services have their own privacy policies and we encourage you to review th
   },
   {
     title: '9. Children\'s Privacy',
-    content: `Uniflux is not intended for children under the age of 16. We do not knowingly collect personal information from children. If we become aware that a child under 16 has provided us with personal information, we will take steps to delete such information promptly.`,
+    content: `Jobwalkers is not intended for children under the age of 16. We do not knowingly collect personal information from children. If we become aware that a child under 16 has provided us with personal information, we will take steps to delete such information promptly.`,
   },
   {
     title: '10. Your Rights',
@@ -85,7 +85,7 @@ These services have their own privacy policies and we encourage you to review th
 • Portability: Request your data in a portable format
 • Objection: Object to processing of your data for certain purposes
 
-To exercise any of these rights, contact us at privacy@uniflux.com. We will respond within 30 days.`,
+To exercise any of these rights, contact us at privacy@Jobwalkers.com. We will respond within 30 days.`,
   },
   {
     title: '11. Changes to This Policy',
@@ -95,8 +95,8 @@ To exercise any of these rights, contact us at privacy@uniflux.com. We will resp
     title: '12. Contact Us',
     content: `If you have any questions, concerns, or requests regarding this Privacy Policy or our data practices, please contact us at:
 
-Email: privacy@uniflux.com
-Address: Uniflux, Hyderabad, Telangana, India`,
+Email: privacy@Jobwalkers.com
+Address: Jobwalkers, Hyderabad, Telangana, India`,
   },
 ];
 
@@ -110,7 +110,7 @@ export default function Privacy() {
             <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center">
               <Briefcase className="w-4 h-4 text-white" />
             </div>
-            <span className="font-bold text-gray-900">Uniflux</span>
+            <span className="font-bold text-gray-900">Jobwalkers</span>
           </Link>
           <Link to="/register" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors">
             <ArrowLeft className="w-4 h-4" />
@@ -129,7 +129,7 @@ export default function Privacy() {
         {/* Intro */}
         <div className="bg-brand-50 border border-brand-100 rounded-2xl p-6 mb-8">
           <p className="text-brand-900 text-sm leading-relaxed">
-            At Uniflux, we take your privacy seriously. This Privacy Policy explains how we collect, use, store, and protect your personal information when you use our job search and application tracking platform.
+            At Jobwalkers, we take your privacy seriously. This Privacy Policy explains how we collect, use, store, and protect your personal information when you use our job search and application tracking platform.
           </p>
         </div>
 
@@ -146,7 +146,7 @@ export default function Privacy() {
         {/* Footer */}
         <div className="mt-10 pt-8 border-t border-gray-200 text-center">
           <p className="text-gray-400 text-sm mb-4">
-            By using Uniflux, you acknowledge that you have read and understood this Privacy Policy.
+            By using Jobwalkers, you acknowledge that you have read and understood this Privacy Policy.
           </p>
           <div className="flex items-center justify-center gap-4">
             <Link to="/terms" className="text-brand-600 hover:text-brand-700 text-sm font-medium">Terms & Conditions</Link>

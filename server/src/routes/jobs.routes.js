@@ -1,8 +1,10 @@
 const router = require('express').Router();
 const { protect } = require('../middleware/auth.middleware');
 const { attachSubscription } = require('../middleware/subscription.middleware');
-const { listJobs, getJob, sseStream } = require('../controllers/jobs.controller');
+const { listJobs, getJob, sseStream, getJobCount } = require('../controllers/jobs.controller');
 const { recordApply, getApplied } = require('../controllers/apply.controller');
+
+router.get('/counts', getJobCount); // public — no auth needed
 
 router.use(protect);
 router.get('/sse',        attachSubscription, sseStream);

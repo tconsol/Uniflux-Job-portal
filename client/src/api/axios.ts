@@ -38,7 +38,7 @@ api.interceptors.response.use(
 
 export function getStoredTokens() {
   try {
-    const raw = localStorage.getItem('uniflux_tokens');
+    const raw = localStorage.getItem('jobwalkers_tokens');
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
@@ -46,11 +46,11 @@ export function getStoredTokens() {
 }
 
 export function setStoredTokens(tokens: { access: string; refresh: string }) {
-  localStorage.setItem('uniflux_tokens', JSON.stringify(tokens));
+  localStorage.setItem('jobwalkers_tokens', JSON.stringify(tokens));
 }
 
 export function clearStoredTokens() {
-  localStorage.removeItem('uniflux_tokens');
+  localStorage.removeItem('jobwalkers_tokens');
 }
 
 export default api;

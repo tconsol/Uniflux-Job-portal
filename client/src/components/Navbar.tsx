@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Briefcase, Menu, X, User, LogOut, ChevronDown, ClipboardList } from 'lucide-react';
+import { Briefcase, Menu, X, User, LogOut, ChevronDown, ClipboardList, Users } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSubscription } from '../hooks/useBilling';
+import { getDailyUsers } from '../utils/dailyUsers';
 
 const PLAN_COLORS: Record<string, string> = {
   free:     'bg-gray-100 text-gray-700',
@@ -75,8 +76,18 @@ export default function Navbar() {
             <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center">
               <Briefcase className="w-4 h-4 text-white" />
             </div>
-            <span className="text-xl font-bold text-gray-900">Uniflux</span>
+            <span className="text-xl font-bold text-gray-900">Jobwalkers</span>
           </Link>
+
+          {/* Active users badge */}
+          <div className="hidden md:flex items-center gap-1.5 bg-green-50 border border-green-200 text-green-700 text-xs font-semibold px-3 py-1.5 rounded-full">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+            </span>
+            <Users className="w-3.5 h-3.5" />
+            {getDailyUsers().toLocaleString()} total users
+          </div>
 
           {/* Desktop nav links */}
           <div className="hidden md:flex items-center gap-6">

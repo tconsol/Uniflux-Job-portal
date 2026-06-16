@@ -33,7 +33,7 @@ export default function Settings() {
       <div className="bg-white border border-gray-200 rounded-2xl p-5">
         <h2 className="text-sm font-semibold text-gray-700 mb-3">Service Info</h2>
         <div className="space-y-2 text-sm text-gray-600">
-          <p>Admin panel manages users, subscriptions, and plan pricing for Uniflux.</p>
+          <p>Admin panel manages users, subscriptions, and plan pricing for Jobwalkers.</p>
           <p className="text-gray-400 text-xs">API: <code className="bg-gray-100 px-1 rounded">{import.meta.env.VITE_API_BASE_URL}</code></p>
         </div>
       </div>

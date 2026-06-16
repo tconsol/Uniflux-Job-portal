@@ -2,41 +2,21 @@ import { Search, X, Clock } from 'lucide-react';
 import CustomSelect from './CustomSelect';
 import type { JobFilters } from '../types';
 
+interface SelectOption { value: string; label: string; }
+
 interface Props {
   filters: JobFilters;
   onChange: (f: JobFilters) => void;
+  jobTypeOptions?: SelectOption[];
 }
 
-const SALARY_RANGE_OPTIONS = [
-  { value: '',        label: 'All salaries' },
-  { value: '0-100',   label: '$0k – $100k' },
-  { value: '100-200', label: '$100k – $200k' },
-  { value: '200-300', label: '$200k – $300k' },
-  { value: '300-400', label: '$300k – $400k' },
-  { value: '400-500', label: '$400k – $500k' },
-  { value: '500+',    label: '$500k+' },
-];
+const DEFAULT_JOB_TYPE_OPTIONS: SelectOption[] = [{ value: '', label: 'All job types' }];
 
-const JOB_TYPE_OPTIONS = [
-  { value: '', label: 'All job types' },
-  { value: 'full-time',  label: 'Full Time' },
-  { value: 'part-time',  label: 'Part Time' },
-  { value: 'contract',   label: 'Contract' },
-  { value: 'freelance',  label: 'Freelance' },
-  { value: 'internship', label: 'Internship' },
-];
-
-const SOURCE_OPTIONS = [
-  { value: '',             label: 'All sources' },
-  { value: 'indeed',       label: 'Indeed' },
-  { value: 'linkedin',     label: 'LinkedIn' },
-  { value: 'glassdoor',    label: 'Glassdoor' },
-  { value: 'google',       label: 'Google' },
-  { value: 'zip_recruiter',label: 'ZipRecruiter' },
-  { value: 'jsearch',      label: 'JSearch' },
-];
-
-export default function JobFiltersBar({ filters, onChange }: Props) {
+export default function JobFiltersBar({
+  filters,
+  onChange,
+  jobTypeOptions = DEFAULT_JOB_TYPE_OPTIONS,
+}: Props) {
   function set(key: keyof JobFilters, value: string | undefined) {
     onChange({ ...filters, [key]: value || undefined });
   }
@@ -45,11 +25,11 @@ export default function JobFiltersBar({ filters, onChange }: Props) {
     onChange({});
   }
 
-  const hasFilters = !!(filters.keyword || filters.location || filters.jobType || filters.source);
+  const hasFilters = !!(filters.keyword || filters.location || filters.jobType);
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-4 space-y-3">
-      {/* Row 1: keyword + location */}
+      {/* keyword + location */}
       <div className="flex gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -80,20 +60,13 @@ export default function JobFiltersBar({ filters, onChange }: Props) {
         )}
       </div>
 
-      {/* Row 2: job type, source, salary range */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+      {/* job type + salary coming soon */}
+      <div className="grid grid-cols-2 gap-2">
         <CustomSelect
           value={filters.jobType ?? ''}
           onChange={(v) => set('jobType', v)}
-          options={JOB_TYPE_OPTIONS}
+          options={jobTypeOptions}
           placeholder="All job types"
-        />
-
-        <CustomSelect
-          value={filters.source ?? ''}
-          onChange={(v) => set('source', v)}
-          options={SOURCE_OPTIONS}
-          placeholder="All sources"
         />
 
         <div className="relative group">

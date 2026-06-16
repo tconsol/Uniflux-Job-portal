@@ -1,12 +1,20 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getJobs, getJob } from '../api/jobs.api';
-import type { Job, JobFilters, JobsResponse } from '../types';
+import { getJobs, getJob, getJobCount } from '../api/jobs.api';
+import type { Job, JobsResponse } from '../types';
 
-export function useJobs(filters: JobFilters = {}) {
+export function useJobs() {
   return useQuery({
-    queryKey: ['jobs', filters],
-    queryFn: () => getJobs(filters),
-    staleTime: 60_000,
+    queryKey: ['jobs'],
+    queryFn:  () => getJobs(),
+    staleTime: 5 * 60 * 1000, // 5 min — data rarely changes mid-session
+  });
+}
+
+export function useJobCount() {
+  return useQuery({
+    queryKey: ['job-count'],
+    queryFn:  () => getJobCount(),
+    staleTime: 10 * 60 * 1000, // 10 min
   });
 }
 
@@ -24,8 +32,8 @@ export function useJob(id: string) {
 
   return useQuery({
     queryKey: ['job', id],
-    queryFn: () => getJob(id),
-    enabled: !!id,
+    queryFn:  () => getJob(id),
+    enabled:  !!id,
     initialData: findInCache,
   });
 }

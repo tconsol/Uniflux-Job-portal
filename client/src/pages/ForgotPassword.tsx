@@ -119,7 +119,7 @@ export default function ForgotPassword() {
             <div className="w-9 h-9 bg-brand-600 rounded-xl flex items-center justify-center">
               <Briefcase className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-gray-900">Uniflux</span>
+            <span className="text-xl font-bold text-gray-900">Jobwalkers</span>
           </div>
 
           {/* Step: Email */}

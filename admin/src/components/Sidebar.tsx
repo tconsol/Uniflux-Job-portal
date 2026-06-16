@@ -20,7 +20,7 @@ export default function Sidebar() {
           <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center">
             <Zap className="w-4 h-4 text-white" />
           </div>
-          <span className="text-white font-bold text-lg tracking-tight">Uniflux</span>
+          <span className="text-white font-bold text-lg tracking-tight">Jobwalkers</span>
           <span className="text-xs bg-brand-900 text-brand-300 px-1.5 py-0.5 rounded font-medium">Admin</span>
         </div>
       </div>

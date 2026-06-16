@@ -56,7 +56,7 @@ export default function Register() {
           <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
             <Briefcase className="w-4 h-4 text-white" />
           </div>
-          <span className="text-white text-lg font-bold tracking-tight">Uniflux</span>
+          <span className="text-white text-lg font-bold tracking-tight">Jobwalkers</span>
         </div>
 
         {/* Hero */}
@@ -69,7 +69,7 @@ export default function Register() {
             Land your dream job<br />faster than ever
           </h1>
           <p className="text-white/60 text-sm leading-relaxed max-w-sm">
-            Join thousands of job seekers using Uniflux to discover, apply, and track opportunities all in one platform.
+            Join thousands of job seekers using Jobwalkers to discover, apply, and track opportunities all in one platform.
           </p>
         </div>
 
@@ -113,7 +113,7 @@ export default function Register() {
             <div className="w-9 h-9 bg-brand-600 rounded-xl flex items-center justify-center">
               <Briefcase className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-gray-900">Uniflux</span>
+            <span className="text-xl font-bold text-gray-900">Jobwalkers</span>
           </div>
 
           <div className="mb-6">
@@ -222,7 +222,7 @@ export default function Register() {
                 <Link to="/privacy" target="_blank" className="text-brand-600 hover:text-brand-700 font-medium underline underline-offset-2">
                   Privacy Policy
                 </Link>
-                . I understand how Uniflux collects and uses my data.
+                . I understand how Jobwalkers collects and uses my data.
               </span>
             </label>
 

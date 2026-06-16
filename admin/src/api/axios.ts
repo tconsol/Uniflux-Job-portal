@@ -1,7 +1,7 @@
 import axios from 'axios';
 import type { AuthTokens } from '../types';
 
-const STORAGE_KEY = 'uniflux_admin_tokens';
+const STORAGE_KEY = 'jobwalkers_admin_tokens';
 
 export function getStoredTokens(): AuthTokens | null {
   try {

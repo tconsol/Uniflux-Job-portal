@@ -77,13 +77,8 @@ export interface AuthTokens {
 }
 
 export interface JobFilters {
-  keyword?: string;
+  keyword?:  string;
   location?: string;
-  jobType?: string;
-  salaryRange?: string;
-  salaryMin?: number;
-  salaryMax?: number;
-  source?: string;
-  page?: number;
-  limit?: number;
+  jobType?:  string;
+  page?:     number;
 }

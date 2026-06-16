@@ -10,7 +10,7 @@ export interface AppliedJobEntry {
   appliedAt: string;
 }
 
-const LS_KEY = 'uniflux_applied_jobs';
+const LS_KEY = 'jobwalkers_applied_jobs';
 
 function loadLocal(): Record<string, AppliedJobEntry> {
   try { return JSON.parse(localStorage.getItem(LS_KEY) || '{}'); } catch { return {}; }

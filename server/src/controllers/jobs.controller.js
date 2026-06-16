@@ -1,18 +1,13 @@
-const { fetchAllJobs } = require('../services/jobs.service');
+const { fetchJobs, fetchJobCount } = require('../services/jobs.service');
 const UserApply = require('../models/UserApply');
 const { addConnection, removeConnection } = require('../services/sse.service');
 
 async function listJobs(req, res) {
   try {
     const { planSlug, applyLimit, subscription } = req.subscription;
-    const { page = 1, limit = 100, keyword, location, jobType, source, salaryMin, salaryMax } = req.query;
-
-    const pageNum  = parseInt(page);
-    const limitNum = Math.min(parseInt(limit) || 100, 100);
-    const skip     = (pageNum - 1) * limitNum;
 
     const [{ jobs, total }, applies] = await Promise.all([
-      fetchAllJobs({ limit: limitNum, skip, keyword, location, jobType, source, salaryMin, salaryMax }),
+      fetchJobs(),
       UserApply.find({ userId: req.user._id }).select('jobId appliedAt').lean(),
     ]);
 
@@ -22,11 +17,9 @@ async function listJobs(req, res) {
     res.json({
       jobs,
       total,
-      page: pageNum,
-      limit: limitNum,
       planSlug,
       applyLimit,
-      appliesUsed:  periodApplies.length,
+      appliesUsed:   periodApplies.length,
       appliedJobIds: applies.map((a) => a.jobId),
     });
   } catch (err) {
@@ -37,7 +30,7 @@ async function listJobs(req, res) {
 
 async function getJob(req, res) {
   try {
-    const { jobs } = await fetchAllJobs({ limit: 100 });
+    const { jobs } = await fetchJobs();
     const job = jobs.find((j) => j._id === req.params.id);
     if (!job) return res.status(404).json({ message: 'Job not found' });
     res.json({ job });
@@ -62,4 +55,14 @@ async function sseStream(req, res) {
   req.on('close', () => { clearInterval(keepAlive); removeConnection(userId, res); });
 }
 
-module.exports = { listJobs, getJob, sseStream };
+async function getJobCount(req, res) {
+  try {
+    const total = await fetchJobCount();
+    res.json({ total });
+  } catch (err) {
+    console.error('[getJobCount]', err.message);
+    res.status(500).json({ message: err.message });
+  }
+}
+
+module.exports = { listJobs, getJob, sseStream, getJobCount };

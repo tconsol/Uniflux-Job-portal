@@ -64,7 +64,7 @@ export default function Plans() {
           order_id: init.orderId,
           amount: init.amount,
           currency: init.currency,
-          name: 'Uniflux',
+          name: 'Jobwalkers',
           description: `${init.planName} Plan — 30 days access`,
           prefill: { name: user.name, email: user.email },
           theme: { color: '#2563eb' },
