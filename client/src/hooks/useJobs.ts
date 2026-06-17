@@ -1,34 +1,29 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getJobs, getJob, getJobCount, getWeekTotal } from '../api/jobs.api';
-import type { Job, JobsResponse } from '../types';
+import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { getJobs, getJob, getJobCount, getCounts } from '../api/jobs.api';
+import type { Job, JobFilters, JobsResponse, CountsResponse } from '../types';
 
-export function useJobs() {
+export function useJobs(filters: JobFilters = {}) {
   return useQuery({
-    queryKey: ['jobs'],
-    queryFn:  () => getJobs(),
+    queryKey:        ['jobs', filters],
+    queryFn:         () => getJobs(filters),
+    staleTime:       2 * 60 * 1000,
+    placeholderData: keepPreviousData, // smooth page transitions — keeps old data visible while new page loads
+  });
+}
+
+export function useCounts(filters: Omit<JobFilters, 'page'> = {}) {
+  return useQuery<CountsResponse>({
+    queryKey:  ['job-counts', filters],
+    queryFn:   () => getCounts(filters),
     staleTime: 5 * 60 * 1000,
-    // Poll every 3s until background fetch on server completes (> 1000 jobs in cache)
-    refetchInterval: (query) => {
-      const jobs = (query.state.data as JobsResponse | undefined)?.jobs;
-      if (!jobs || jobs.length <= 1000) return 3000;
-      return false;
-    },
   });
 }
 
 export function useJobCount() {
   return useQuery({
-    queryKey: ['job-count'],
-    queryFn:  () => getJobCount(),
+    queryKey:  ['job-count'],
+    queryFn:   () => getJobCount(),
     staleTime: 10 * 60 * 1000,
-  });
-}
-
-export function useWeekTotal() {
-  return useQuery({
-    queryKey: ['week-total'],
-    queryFn:  () => getWeekTotal(),
-    staleTime: 5 * 60 * 1000,
   });
 }
 
@@ -45,9 +40,9 @@ export function useJob(id: string) {
   }
 
   return useQuery({
-    queryKey: ['job', id],
-    queryFn:  () => getJob(id),
-    enabled:  !!id,
+    queryKey:    ['job', id],
+    queryFn:     () => getJob(id),
+    enabled:     !!id,
     initialData: findInCache,
   });
 }

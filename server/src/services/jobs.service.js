@@ -1,22 +1,60 @@
 const axios = require('axios');
-const { broadcastToAll } = require('./sse.service');
 
-const MARKETPLACE_URL  = process.env.MARKETPLACE_API_URL || '';
-const PUBLIC_JOBS_URL  = `${MARKETPLACE_URL}/api/v1/marketplace/jobs/public`;
-const COUNTS_URL       = `${MARKETPLACE_URL}/api/v1/marketplace/jobs/public/counts`;
-const PAGE_LIMIT = 1000;
-const CACHE_TTL  = 5 * 60 * 1000; // 5 min
+const MARKETPLACE_URL = process.env.MARKETPLACE_API_URL || '';
+const PUBLIC_JOBS_URL = `${MARKETPLACE_URL}/api/v1/marketplace/jobs/public`;
+const COUNTS_URL      = `${MARKETPLACE_URL}/api/v1/marketplace/jobs/public/counts`;
+const CACHE_TTL       = 2 * 60 * 1000; // 2 min per-page cache
 
-// ─── in-memory cache ───────────────────────────────────────────────────────
-let _cache       = null; // { jobs: [], total: number }
-let _cacheTime   = 0;
-let _fetching    = false; // background fetch in progress
+// ─── per-request cache ─────────────────────────────────────────────────────
+const _pageCache = new Map(); // cacheKey → { data, time }
 
-function isCacheValid() {
-  return _cache && (Date.now() - _cacheTime) < CACHE_TTL;
+// individual job lookup (populated as pages are fetched)
+const _jobById = new Map();
+
+function cacheGet(key) {
+  const entry = _pageCache.get(key);
+  if (entry && Date.now() - entry.time < CACHE_TTL) return entry.data;
+  return null;
+}
+
+function cacheSet(key, data) {
+  _pageCache.set(key, { data, time: Date.now() });
+  // prune stale entries
+  if (_pageCache.size > 500) {
+    const now = Date.now();
+    for (const [k, v] of _pageCache) {
+      if (now - v.time > CACHE_TTL) _pageCache.delete(k);
+    }
+  }
 }
 
 // ─── helpers ───────────────────────────────────────────────────────────────
+
+// Client uses 'full-time'; marketplace API expects 'fulltime'
+const JOB_TYPE_TO_API = {
+  'full-time':  'fulltime',
+  'part-time':  'parttime',
+  'contract':   'contract',
+  'freelance':  'contract',
+  'internship': 'internship',
+  'temporary':  'temporary',
+};
+
+function buildJobParams({ page = 1, keyword, location, job_type } = {}) {
+  const params = { page };
+  if (keyword)  params.keyword  = keyword;
+  if (location) params.location = location;
+  if (job_type) params.job_type = JOB_TYPE_TO_API[job_type] || job_type;
+  return params;
+}
+
+function buildCountParams({ keyword, location, job_type } = {}) {
+  const params = {};
+  if (keyword)  params.keyword  = keyword;
+  if (location) params.location = location;
+  if (job_type) params.job_type = JOB_TYPE_TO_API[job_type] || job_type;
+  return params;
+}
 
 function normalizeJobType(raw) {
   if (!raw) return 'full-time';
@@ -35,7 +73,7 @@ function mapLocation(loc) {
 }
 
 function mapJob(sj) {
-  return {
+  const job = {
     _id:            sj.id            || '',
     title:          sj.title         || '',
     company:        sj.company_name  || '',
@@ -50,81 +88,80 @@ function mapJob(sj) {
     postedAt:       sj.posted_at     || sj.scraped_at || null,
     source:         sj.source_site   || '',
   };
+  // store for getJob lookups
+  if (job._id) _jobById.set(job._id, job);
+  return job;
 }
 
-async function fetchPage(skip) {
+// Remap marketplace job_type keys to our internal format for counts response
+function remapByJobType(byType = {}) {
+  const map = {
+    fulltime:          'full-time',
+    parttime:          'part-time',
+    contract:          'contract',
+    contract_to_hire:  'contract',
+    internship:        'internship',
+    temporary:         'contract',
+    freelance:         'freelance',
+    perdiem:           'part-time',
+  };
+  const out = {};
+  for (const [k, v] of Object.entries(byType)) {
+    const key = map[k] || k;
+    out[key] = (out[key] || 0) + v;
+  }
+  return out;
+}
+
+// ─── main exports ──────────────────────────────────────────────────────────
+
+async function fetchJobs({ page = 1, keyword, location, job_type } = {}) {
+  const filters = { page, keyword, location, job_type };
+  const key = JSON.stringify(filters);
+  const cached = cacheGet(key);
+  if (cached) return cached;
+
   const { data } = await axios.get(PUBLIC_JOBS_URL, {
-    params: { date_posted: 'week', limit: PAGE_LIMIT, skip },
+    params:  buildJobParams(filters),
     timeout: 30000,
   });
-  return data.jobs || [];
+
+  const result = {
+    jobs:       (data.jobs || []).map(mapJob),
+    total:      data.total      || 0,
+    page:       data.page       || 1,
+    limit:      data.limit      || 200,
+    totalPages: data.total_pages || 1,
+    hasMore:    data.has_more   || false,
+  };
+
+  cacheSet(key, result);
+  return result;
 }
 
-// ─── background: fetch all remaining pages after the first ─────────────────
-async function fetchAllInBackground(firstPageJobs) {
-  if (_fetching) return;
-  _fetching = true;
+async function fetchCounts({ keyword, location, job_type } = {}) {
+  const filters = { keyword, location, job_type };
+  const key = `counts:${JSON.stringify(filters)}`;
+  const cached = cacheGet(key);
+  if (cached) return cached;
 
-  try {
-    const allJobs = [...firstPageJobs];
-    let skip = PAGE_LIMIT;
-
-    while (true) {
-      const page = await fetchPage(skip);
-      allJobs.push(...page.map(mapJob));
-      if (page.length < PAGE_LIMIT) break;
-      skip += PAGE_LIMIT;
-    }
-
-    _cache     = { jobs: allJobs, total: allJobs.length };
-    _cacheTime = Date.now();
-    console.log(`[jobs] full fetch complete — ${allJobs.length} jobs cached`);
-
-    // Tell all connected clients to refetch
-    broadcastToAll('job_updated', { reason: 'full_load_complete' });
-  } catch (err) {
-    console.error('[jobs] background fetch error:', err.message);
-  } finally {
-    _fetching = false;
-  }
-}
-
-// ─── main export ───────────────────────────────────────────────────────────
-async function fetchJobs() {
-  // Cache hit → return immediately
-  if (isCacheValid()) {
-    return _cache;
-  }
-
-  // Fetch first page synchronously so the client gets data fast
-  const firstRaw  = await fetchPage(0);
-  const firstJobs = firstRaw.map(mapJob);
-
-  // If first page is already less than PAGE_LIMIT, that's everything — cache and return
-  if (firstRaw.length < PAGE_LIMIT) {
-    _cache     = { jobs: firstJobs, total: firstJobs.length };
-    _cacheTime = Date.now();
-    return _cache;
-  }
-
-  // Otherwise return first 1000 immediately and fetch the rest in background
-  fetchAllInBackground(firstJobs); // intentionally not awaited
-
-  return { jobs: firstJobs, total: firstJobs.length };
-}
-
-async function fetchJobCount() {
-  const { data } = await axios.get(COUNTS_URL, { timeout: 10000 });
-  return data.total ?? 0;
-}
-
-// Fast: counts endpoint with week filter — returns total immediately
-async function fetchWeekTotal() {
   const { data } = await axios.get(COUNTS_URL, {
-    params: { date_posted: 'week' },
+    params:  buildCountParams(filters),
     timeout: 10000,
   });
-  return data.total ?? 0;
+
+  const result = {
+    total:       data.total ?? 0,
+    by_site:     data.by_site     || {},
+    by_job_type: remapByJobType(data.by_job_type),
+  };
+
+  cacheSet(key, result);
+  return result;
 }
 
-module.exports = { fetchJobs, fetchJobCount, fetchWeekTotal };
+async function fetchJobById(id) {
+  return _jobById.get(id) || null;
+}
+
+module.exports = { fetchJobs, fetchCounts, fetchJobById };

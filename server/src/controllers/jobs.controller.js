@@ -1,13 +1,14 @@
-const { fetchJobs, fetchJobCount, fetchWeekTotal } = require('../services/jobs.service');
+const { fetchJobs, fetchCounts, fetchJobById } = require('../services/jobs.service');
 const UserApply = require('../models/UserApply');
 const { addConnection, removeConnection } = require('../services/sse.service');
 
 async function listJobs(req, res) {
   try {
+    const { page = 1, keyword, location, jobType } = req.query;
     const { planSlug, applyLimit, subscription } = req.subscription;
 
-    const [{ jobs, total }, applies] = await Promise.all([
-      fetchJobs(),
+    const [result, applies] = await Promise.all([
+      fetchJobs({ page: Number(page), keyword, location, job_type: jobType }),
       UserApply.find({ userId: req.user._id }).select('jobId appliedAt').lean(),
     ]);
 
@@ -15,8 +16,7 @@ async function listJobs(req, res) {
     const periodApplies = since ? applies.filter((a) => new Date(a.appliedAt) >= since) : applies;
 
     res.json({
-      jobs,
-      total,
+      ...result,
       planSlug,
       applyLimit,
       appliesUsed:   periodApplies.length,
@@ -30,8 +30,7 @@ async function listJobs(req, res) {
 
 async function getJob(req, res) {
   try {
-    const { jobs } = await fetchJobs();
-    const job = jobs.find((j) => j._id === req.params.id);
+    const job = await fetchJobById(req.params.id);
     if (!job) return res.status(404).json({ message: 'Job not found' });
     res.json({ job });
   } catch (err) {
@@ -57,18 +56,20 @@ async function sseStream(req, res) {
 
 async function getJobCount(req, res) {
   try {
-    const total = await fetchJobCount();
-    res.json({ total });
+    const { keyword, location, jobType } = req.query;
+    const data = await fetchCounts({ keyword, location, job_type: jobType });
+    res.json(data);
   } catch (err) {
     console.error('[getJobCount]', err.message);
     res.status(500).json({ message: err.message });
   }
 }
 
+// kept for backward compat — same as /counts but returns { total } only
 async function getWeekTotal(req, res) {
   try {
-    const total = await fetchWeekTotal();
-    res.json({ total });
+    const data = await fetchCounts();
+    res.json({ total: data.total });
   } catch (err) {
     console.error('[getWeekTotal]', err.message);
     res.status(500).json({ message: err.message });

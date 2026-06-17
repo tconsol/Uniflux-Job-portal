@@ -65,10 +65,18 @@ export interface JobsResponse {
   total: number;
   page: number;
   limit: number;
+  totalPages: number;
+  hasMore: boolean;
   planSlug: string;
   applyLimit: number;
   appliesUsed: number;
   appliedJobIds: string[];
+}
+
+export interface CountsResponse {
+  total: number;
+  by_site: Record<string, number>;
+  by_job_type: Record<string, number>;
 }
 
 export interface AuthTokens {

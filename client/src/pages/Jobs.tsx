@@ -1,29 +1,22 @@
-import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Loader2, AlertCircle, RefreshCw, Zap, AlertTriangle, Info, X } from 'lucide-react';
 import JobCard from '../components/JobCard';
 import JobFiltersBar from '../components/JobFilters';
-import { useJobs, useJobCount, useWeekTotal } from '../hooks/useJobs';
+import { useJobs, useCounts } from '../hooks/useJobs';
 import { useSSE } from '../hooks/useSSE';
 import type { Job, JobFilters } from '../types';
 
-const DISPLAY_SIZE = 1000;
-const MILESTONES   = [50, 60, 70, 80, 90, 100];
+const MILESTONES = [50, 60, 70, 80, 90, 100];
 
-// ─── helpers ───────────────────────────────────────────────────────────────
-
-function normalizeJobType(raw: string | null | undefined): string {
-  if (!raw) return 'full-time';
-  const r = raw.toLowerCase().replace(/[-_\s]/g, '');
-  if (r.includes('part'))      return 'part-time';
-  if (r.includes('contract'))  return 'contract';
-  if (r.includes('freelance')) return 'freelance';
-  if (r.includes('intern'))    return 'internship';
-  if (r.includes('temp'))      return 'contract';
-  if (r.includes('casual'))    return 'part-time';
-  return 'full-time';
-}
+const JOB_TYPE_OPTIONS = [
+  { value: '',           label: 'All job types' },
+  { value: 'full-time',  label: 'Full-Time' },
+  { value: 'part-time',  label: 'Part-Time' },
+  { value: 'contract',   label: 'Contract' },
+  { value: 'internship', label: 'Internship' },
+];
 
 const JOB_TYPE_LABELS: Record<string, string> = {
   'full-time':  'Full-Time',
@@ -47,13 +40,13 @@ function toastLevel(pct: number): Toast['level'] {
   return 'info';
 }
 
-// URL ↔ filter state (persists filters on refresh / share)
+// URL ↔ filter state
 function readFilters(params: URLSearchParams): JobFilters {
   const f: JobFilters = { page: 1 };
-  if (params.get('page'))    f.page    = Number(params.get('page'));
-  if (params.get('keyword')) f.keyword = params.get('keyword')!;
-  if (params.get('location'))f.location= params.get('location')!;
-  if (params.get('jobType')) f.jobType = params.get('jobType')!;
+  if (params.get('page'))     f.page     = Number(params.get('page'));
+  if (params.get('keyword'))  f.keyword  = params.get('keyword')!;
+  if (params.get('location')) f.location = params.get('location')!;
+  if (params.get('jobType'))  f.jobType  = params.get('jobType')!;
   return f;
 }
 
@@ -64,6 +57,29 @@ function writeFilters(f: JobFilters): Record<string, string> {
   if (f.location)            p.location = f.location;
   if (f.jobType)             p.jobType  = f.jobType;
   return p;
+}
+
+// ─── skeleton grid ─────────────────────────────────────────────────────────
+
+function SkeletonGrid() {
+  return (
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {Array.from({ length: 12 }).map((_, i) => (
+        <div key={i} className="bg-white border border-gray-200 rounded-2xl p-5 animate-pulse">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 bg-gray-200 rounded-lg" />
+            <div className="h-3 bg-gray-200 rounded w-24" />
+          </div>
+          <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
+          <div className="h-3 bg-gray-200 rounded w-1/2 mb-4" />
+          <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100">
+            <div className="h-5 bg-gray-200 rounded-full w-16" />
+            <div className="h-5 bg-gray-200 rounded-full w-14" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 // ─── pagination UI ─────────────────────────────────────────────────────────
@@ -117,10 +133,13 @@ export default function Jobs() {
   const [searchParams, setSearchParams] = useSearchParams();
   const filters = readFilters(searchParams);
 
-  // One backend call — get all jobs, cache for 5 min. No filter params sent.
-  const { data, isLoading, isError, refetch } = useJobs();
-  const { data: totalJobCount } = useJobCount();
-  const { data: weekTotal }     = useWeekTotal();
+  const { keyword = '', location = '', jobType = '', page = 1 } = filters;
+
+  // Server handles filtering and pagination — pass all params to the query
+  const { data, isLoading, isFetching, isError, refetch } = useJobs(filters);
+
+  // Counts with active filters for total count display
+  const { data: countsData } = useCounts({ keyword: keyword || undefined, location: location || undefined, jobType: jobType || undefined });
 
   useSSE({
     onJobUpdate: useCallback(() => {
@@ -189,46 +208,13 @@ export default function Jobs() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }
 
-  // ── normalise all jobs once ───────────────────────────────────────────
-  const allJobs = useMemo(
-    () => (data?.jobs ?? []).map((j) => ({
-      ...j,
-      jobType: normalizeJobType(j.jobType) as Job['jobType'],
-    })),
-    [data?.jobs],
-  );
+  // ── pagination ────────────────────────────────────────────────────────
+  // totalPages and total come directly from the API response
+  const totalPages   = data?.totalPages ?? countsData ? Math.ceil((countsData?.total ?? 0) / 200) : 1;
+  const safePage     = Math.min(Math.max(1, page), Math.max(totalPages, 1));
+  const displayedJobs = data?.jobs ?? [];
+  const totalCount   = data?.total ?? countsData?.total ?? 0;
 
-  // ── dynamic job-type options from actual data ─────────────────────────
-  const jobTypeOptions = useMemo(() => [
-    { value: '', label: 'All job types' },
-    ...Array.from(new Set(allJobs.map((j) => j.jobType))).sort()
-      .map((t) => ({ value: t, label: JOB_TYPE_LABELS[t] ?? t })),
-  ], [allJobs]);
-
-  // ── client-side filtering (keyword, location, jobType) ────────────────
-  const { keyword = '', location = '', jobType = '', page = 1 } = filters;
-  const kw  = keyword.toLowerCase().trim();
-  const loc = location.toLowerCase().trim();
-
-  const filteredJobs = useMemo(() => allJobs.filter((j) => {
-    if (jobType && j.jobType !== jobType) return false;
-    if (kw  && !`${j.title} ${j.company} ${j.description}`.toLowerCase().includes(kw))  return false;
-    if (loc && !j.location.toLowerCase().includes(loc)) return false;
-    return true;
-  }), [allJobs, jobType, kw, loc]);
-
-  // ── client-side pagination ────────────────────────────────────────────
-  // No filters → use weekTotal (instant, even before all jobs load)
-  // Filters active → use actual filtered count
-  const hasFilters = !!(kw || loc || jobType);
-  const knownTotal = hasFilters
-    ? filteredJobs.length
-    : Math.max(weekTotal ?? 0, filteredJobs.length);
-  const totalPages    = Math.ceil(knownTotal / DISPLAY_SIZE) || 1;
-  const safePage      = Math.min(Math.max(1, page), totalPages);
-  const displayedJobs = filteredJobs.slice((safePage - 1) * DISPLAY_SIZE, safePage * DISPLAY_SIZE);
-
-  // Reset URL page when it's out of range (e.g. stale URL from old DISPLAY_SIZE)
   useEffect(() => {
     if (page !== safePage) {
       setSearchParams(writeFilters({ ...filters, page: safePage }), { replace: true });
@@ -278,11 +264,14 @@ export default function Jobs() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Jobs</h1>
-            {totalJobCount ? (
+            {totalCount > 0 && (
               <p className="text-sm text-gray-500 mt-1">
-                <span className="font-semibold text-brand-600">{totalJobCount.toLocaleString()}</span> total jobs in marketplace
+                <span className="font-semibold text-brand-600">{totalCount.toLocaleString()}</span> jobs found
+                {isFetching && !isLoading && (
+                  <Loader2 className="inline w-3 h-3 ml-2 animate-spin text-gray-400" />
+                )}
               </p>
-            ) : null}
+            )}
           </div>
 
           <div className="flex items-center gap-4">
@@ -319,7 +308,7 @@ export default function Jobs() {
 
         {/* Filters */}
         <div className="mb-6">
-          <JobFiltersBar filters={filters} onChange={handleFilterChange} jobTypeOptions={jobTypeOptions} />
+          <JobFiltersBar filters={filters} onChange={handleFilterChange} jobTypeOptions={JOB_TYPE_OPTIONS} />
         </div>
 
         {/* Apply limit banner */}
@@ -340,22 +329,7 @@ export default function Jobs() {
 
         {/* Content */}
         {isLoading ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 12 }).map((_, i) => (
-              <div key={i} className="bg-white border border-gray-200 rounded-2xl p-5 animate-pulse">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-8 h-8 bg-gray-200 rounded-lg" />
-                  <div className="h-3 bg-gray-200 rounded w-24" />
-                </div>
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
-                <div className="h-3 bg-gray-200 rounded w-1/2 mb-4" />
-                <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100">
-                  <div className="h-5 bg-gray-200 rounded-full w-16" />
-                  <div className="h-5 bg-gray-200 rounded-full w-14" />
-                </div>
-              </div>
-            ))}
-          </div>
+          <SkeletonGrid />
         ) : isError ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <AlertCircle className="w-10 h-10 text-red-400 mb-3" />
@@ -364,7 +338,7 @@ export default function Jobs() {
               Retry
             </button>
           </div>
-        ) : !filteredJobs.length ? (
+        ) : !displayedJobs.length ? (
           <div className="text-center py-20">
             <p className="text-gray-500">No jobs match your filters.</p>
           </div>
@@ -386,10 +360,10 @@ export default function Jobs() {
         )}
       </div>
 
-      {/* Floating pill pagination — always visible */}
+      {/* Floating pill pagination */}
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
         <div className="bg-brand-600 backdrop-blur-md shadow-2xl rounded-full px-6 py-3">
-          <Pagination current={safePage} total={totalPages} onChange={handlePageChange} />
+          <Pagination current={safePage} total={Math.max(totalPages, 1)} onChange={handlePageChange} />
         </div>
       </div>
     </div>
