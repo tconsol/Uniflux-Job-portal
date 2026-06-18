@@ -94,6 +94,15 @@ function mapJob(sj) {
 }
 
 // Remap marketplace job_type keys to our internal format for counts response
+function sortNewestFirst(jobs) {
+  return jobs.slice().sort((a, b) => {
+    if (!a.postedAt && !b.postedAt) return 0;
+    if (!a.postedAt) return 1;
+    if (!b.postedAt) return -1;
+    return new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime();
+  });
+}
+
 function remapByJobType(byType = {}) {
   const map = {
     fulltime:          'full-time',
@@ -127,7 +136,7 @@ async function fetchJobs({ page = 1, keyword, location, job_type } = {}) {
   });
 
   const result = {
-    jobs:       (data.jobs || []).map(mapJob),
+    jobs:       sortNewestFirst((data.jobs || []).map(mapJob)),
     total:      data.total      || 0,
     page:       data.page       || 1,
     limit:      data.limit      || 200,
