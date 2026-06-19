@@ -10,6 +10,33 @@ import type { Job, JobFilters } from '../types';
 
 const MILESTONES = [50, 60, 70, 80, 90, 100];
 
+const DATE_GROUP_ORDER = [
+  'Today', 'Yesterday', '2 days ago', '3 days ago', '4 days ago',
+  '5 days ago', '6 days ago', 'Last week', 'This month', 'Older', 'Unknown',
+];
+
+function dateGroup(postedAt: string | null | undefined): string {
+  if (!postedAt) return 'Unknown';
+  const diff = Math.floor((Date.now() - new Date(postedAt).getTime()) / 86_400_000);
+  if (diff <= 0)  return 'Today';
+  if (diff === 1) return 'Yesterday';
+  if (diff <= 6)  return `${diff} days ago`;
+  if (diff <= 14) return 'Last week';
+  if (diff <= 30) return 'This month';
+  return 'Older';
+}
+
+function groupJobsByDate(jobs: Job[]): { label: string; jobs: Job[] }[] {
+  const map: Record<string, Job[]> = {};
+  for (const job of jobs) {
+    const label = dateGroup(job.postedAt);
+    (map[label] ??= []).push(job);
+  }
+  return DATE_GROUP_ORDER
+    .filter((label) => map[label]?.length)
+    .map((label) => ({ label, jobs: map[label] }));
+}
+
 const JOB_TYPE_OPTIONS = [
   { value: '',           label: 'All job types' },
   { value: 'full-time',  label: 'Full-Time' },
@@ -343,18 +370,29 @@ export default function Jobs() {
             <p className="text-gray-500">No jobs match your filters.</p>
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {displayedJobs.map((job) => (
-              <JobCard
-                key={job._id}
-                job={job}
-                hasApplied={appliedSet.has(job._id)}
-                isLocked={limitReached && !appliedSet.has(job._id)}
-                applyLimit={applyLimit}
-                appliesUsed={appliesUsed}
-                onApplied={handleApplied}
-                onClick={() => navigate(`/jobs/${job._id}`)}
-              />
+          <div className="space-y-8">
+            {groupJobsByDate(displayedJobs).map(({ label, jobs: group }) => (
+              <section key={label}>
+                <div className="flex items-center gap-3 mb-4">
+                  <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">{label}</h2>
+                  <span className="text-xs bg-gray-100 text-gray-500 font-medium px-2 py-0.5 rounded-full">{group.length}</span>
+                  <div className="flex-1 h-px bg-gray-200" />
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {group.map((job) => (
+                    <JobCard
+                      key={job._id}
+                      job={job}
+                      hasApplied={appliedSet.has(job._id)}
+                      isLocked={limitReached && !appliedSet.has(job._id)}
+                      applyLimit={applyLimit}
+                      appliesUsed={appliesUsed}
+                      onApplied={handleApplied}
+                      onClick={() => navigate(`/jobs/${job._id}`)}
+                    />
+                  ))}
+                </div>
+              </section>
             ))}
           </div>
         )}

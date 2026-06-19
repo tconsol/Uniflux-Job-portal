@@ -125,26 +125,33 @@ function remapByJobType(byType = {}) {
 // ─── main exports ──────────────────────────────────────────────────────────
 
 async function fetchJobs({ page = 1, keyword, location, job_type } = {}) {
-  const filters = { page, keyword, location, job_type };
-  const key = JSON.stringify(filters);
-  const cached = cacheGet(key);
-  if (cached) return cached;
+  // Get total_pages first so we can reverse the page order.
+  // API is oldest-first globally; client page 1 → API last page (newest).
+  const counts   = await fetchCounts({ keyword, location, job_type });
+  const totalPages = Math.ceil(counts.total / 200) || 1;
+  const apiPage    = Math.max(1, totalPages - page + 1);
+
+  const cacheKey = JSON.stringify({ apiPage, keyword, location, job_type });
+  const cached   = cacheGet(cacheKey);
+  if (cached) return { ...cached, page, totalPages, hasMore: page < totalPages };
 
   const { data } = await axios.get(PUBLIC_JOBS_URL, {
-    params:  buildJobParams(filters),
+    params:  buildJobParams({ page: apiPage, keyword, location, job_type }),
     timeout: 30000,
   });
 
+  const jobs = sortNewestFirst((data.jobs || []).map(mapJob));
+
   const result = {
-    jobs:       sortNewestFirst((data.jobs || []).map(mapJob)),
-    total:      data.total      || 0,
-    page:       data.page       || 1,
-    limit:      data.limit      || 200,
-    totalPages: data.total_pages || 1,
-    hasMore:    data.has_more   || false,
+    jobs,
+    total:      counts.total,
+    page,
+    limit:      data.limit || 200,
+    totalPages,
+    hasMore:    page < totalPages,
   };
 
-  cacheSet(key, result);
+  cacheSet(cacheKey, { ...result, page: apiPage });
   return result;
 }
 
