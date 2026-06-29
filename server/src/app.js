@@ -36,10 +36,13 @@ const ALLOWED_ORIGINS = [
 
 app.use(cors({
   origin: (origin, cb) => {
-    if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+    if (!origin) return cb(null, true);
+    if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+    if (origin.startsWith('chrome-extension://')) return cb(null, true);
     cb(new Error(`CORS: origin ${origin} not allowed`));
   },
   credentials: true,
+  exposedHeaders: ['X-Extension-Auth'],
 }));
 
 // ── Rate limiting ─────────────────────────────────────────────────────────────
