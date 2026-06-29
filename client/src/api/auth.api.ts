@@ -50,3 +50,13 @@ export async function updateProfile(payload: { name?: string; currentPassword?: 
   const { data } = await api.put<{ message: string; user: User }>('/auth/profile', payload);
   return data;
 }
+
+export async function getFullProfile() {
+  const { data } = await api.get<{ profile: User['profile'] }>('/profile/full');
+  return data.profile;
+}
+
+export async function updateFullProfile(profile: Partial<User['profile']>) {
+  const { data } = await api.put<{ message: string; profile: User['profile'] }>('/profile/full', profile);
+  return data;
+}

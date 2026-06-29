@@ -262,6 +262,19 @@ async function resetPassword(req, res) {
   }
 }
 
+async function extensionRefresh(req, res) {
+  try {
+    const token = jwt.sign(
+      { userId: req.user._id, type: 'extension' },
+      process.env.JWT_SECRET,
+      { expiresIn: '5m' }
+    );
+    res.json({ token, expiresIn: 300 });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+}
+
 async function updateProfile(req, res) {
   try {
     const { name, currentPassword, newPassword } = req.body;
@@ -293,5 +306,5 @@ async function updateProfile(req, res) {
 module.exports = {
   register, verifyOtp, resendOtp, login, refresh,
   getGoogleOAuthUrl, googleCallback, me,
-  forgotPassword, resetPassword, updateProfile,
+  forgotPassword, resetPassword, updateProfile, extensionRefresh,
 };

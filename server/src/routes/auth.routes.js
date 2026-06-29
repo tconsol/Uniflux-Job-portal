@@ -4,7 +4,7 @@ const {
   register, verifyOtp, resendOtp,
   login, refresh,
   getGoogleOAuthUrl, googleCallback, me,
-  forgotPassword, resetPassword, updateProfile,
+  forgotPassword, resetPassword, updateProfile, extensionRefresh,
 } = require('../controllers/auth.controller');
 
 router.post('/register', register);
@@ -18,5 +18,6 @@ router.get('/me', protect, me);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
 router.put('/profile', protect, updateProfile);
+router.post('/extension-refresh', protect, extensionRefresh);
 
 module.exports = router;

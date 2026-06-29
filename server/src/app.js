@@ -6,6 +6,7 @@ const authRoutes = require('./routes/auth.routes');
 const jobsRoutes = require('./routes/jobs.routes');
 const billingRoutes = require('./routes/billing.routes');
 const adminRoutes = require('./routes/admin.routes');
+const profileRoutes = require('./routes/profile.routes');
 
 const app = express();
 
@@ -54,6 +55,7 @@ app.use('/api/auth',    authRoutes);
 app.use('/api/jobs',    jobsRoutes);
 app.use('/api/billing', billingRoutes);
 app.use('/api/admin',   adminRoutes);
+app.use('/api/profile', profileRoutes);
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => res.json({ status: 'ok', service: 'uniflux-job-portal' }));

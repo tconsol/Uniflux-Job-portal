@@ -1,3 +1,52 @@
+export interface Education {
+  institution: string;
+  degree: string;
+  field: string;
+  startDate?: string;
+  endDate?: string;
+  gpa?: string;
+}
+
+export interface Experience {
+  company: string;
+  title: string;
+  location?: string;
+  startDate?: string;
+  endDate?: string;
+  current?: boolean;
+  description?: string;
+}
+
+export interface Certification {
+  name: string;
+  issuer: string;
+  date?: string;
+  url?: string;
+}
+
+export interface UserProfile {
+  name: string;
+  email: string;
+  resumeUrl?: string | null;
+  skills: string[];
+  phone?: string | null;
+  location?: string | null;
+  linkedIn?: string | null;
+  portfolio?: string | null;
+  github?: string | null;
+  title?: string | null;
+  bio?: string | null;
+  education: Education[];
+  experience: Experience[];
+  certifications: Certification[];
+  coverLetter?: string | null;
+  preferences: {
+    locations: string[];
+    jobTypes: string[];
+    salaryMin?: number | null;
+  };
+}
+
 export interface User {
   _id: string;
   name: string;
@@ -8,15 +57,7 @@ export interface User {
   agreedToTerms: boolean;
   agreedToTermsAt?: string;
   razorpayCustomerId?: string;
-  profile: {
-    resumeUrl?: string;
-    skills: string[];
-    preferences: {
-      locations: string[];
-      jobTypes: string[];
-      salaryMin?: number;
-    };
-  };
+  profile: UserProfile;
   createdAt: string;
 }
 
