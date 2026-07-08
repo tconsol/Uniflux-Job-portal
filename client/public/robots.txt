@@ -1,0 +1,20 @@
+User-agent: *
+Allow: /
+Allow: /jobs
+Allow: /plans
+
+# Block private/auth pages
+Disallow: /profile
+Disallow: /applications
+Disallow: /admin
+Disallow: /api/
+
+# Block query params that create duplicate content
+Disallow: /*?page=*
+Allow: /jobs?page=*
+
+# Crawl rate — be gentle
+Crawl-delay: 2
+
+# Sitemap
+Sitemap: https://jobwalkers.com/sitemap.xml

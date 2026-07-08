@@ -1,0 +1,21 @@
+{
+  "name": "Jobwalkers",
+  "short_name": "Jobwalkers",
+  "description": "Find jobs from Indeed, LinkedIn, Glassdoor and more in one place.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4F46E5",
+  "icons": [
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

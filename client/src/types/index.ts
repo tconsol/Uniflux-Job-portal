@@ -67,6 +67,7 @@ export interface JobsResponse {
   limit: number;
   totalPages: number;
   hasMore: boolean;
+  isFullyLoaded: boolean;
   planSlug: string;
   applyLimit: number;
   appliesUsed: number;

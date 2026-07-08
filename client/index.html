@@ -2,12 +2,90 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Jobwalkers Find Your Next Job</title>
+
+    <!-- ── Primary SEO ───────────────────────────────────────────────────── -->
+    <title>Jobwalkers — Find Jobs from Indeed, LinkedIn, Glassdoor & More</title>
+    <meta name="description" content="Jobwalkers aggregates thousands of job listings from Indeed, LinkedIn, Glassdoor, and JSearch into one clean feed. Search full-time, part-time, contract, and internship jobs by keyword, location, and skills." />
+    <meta name="keywords" content="job search, find jobs, job listings, jobs near me, indeed jobs, linkedin jobs, glassdoor jobs, remote jobs, full time jobs, part time jobs, contract jobs, internship, software engineer jobs, IT jobs, data science jobs, devops jobs, java developer, react developer, python jobs, cloud engineer, cybersecurity jobs, job portal, career opportunities, job aggregator, Jobwalkers" />
+    <meta name="author" content="Jobwalkers" />
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <link rel="canonical" href="https://jobwalkers.com/" />
+
+    <!-- ── Open Graph (Facebook / LinkedIn) ────────────────────────────── -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Jobwalkers" />
+    <meta property="og:title" content="Jobwalkers — Find Jobs from Indeed, LinkedIn, Glassdoor & More" />
+    <meta property="og:description" content="Search 60,000+ jobs from top sources in one place. Filter by keyword, location, job type, and skills. New jobs added daily." />
+    <meta property="og:url" content="https://jobwalkers.com/" />
+    <meta property="og:image" content="https://jobwalkers.com/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- ── Twitter Card ──────────────────────────────────────────────────── -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@jobwalkers" />
+    <meta name="twitter:title" content="Jobwalkers — Find Jobs from Indeed, LinkedIn, Glassdoor & More" />
+    <meta name="twitter:description" content="Search 60,000+ jobs from top sources in one place. Filter by keyword, location, job type, and skills." />
+    <meta name="twitter:image" content="https://jobwalkers.com/og-image.png" />
+
+    <!-- ── Favicons ──────────────────────────────────────────────────────── -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content="#4F46E5" />
+    <meta name="msapplication-TileColor" content="#4F46E5" />
+
+    <!-- ── Performance ──────────────────────────────────────────────────── -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="dns-prefetch" href="https://uniflux-job-portal-64307221061.asia-south1.run.app" />
+
+    <!-- ── Structured Data (JSON-LD) ────────────────────────────────────── -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Jobwalkers",
+      "url": "https://jobwalkers.com",
+      "description": "Job aggregator pulling listings from Indeed, LinkedIn, Glassdoor, and JSearch.",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://jobwalkers.com/jobs?keyword={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Jobwalkers",
+        "url": "https://jobwalkers.com",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://jobwalkers.com/favicon.svg"
+        }
+      }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Jobwalkers",
+      "url": "https://jobwalkers.com",
+      "sameAs": [],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "customer support",
+        "email": "support@jobwalkers.com"
+      }
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>
