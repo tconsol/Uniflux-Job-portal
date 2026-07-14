@@ -7,7 +7,13 @@ export function useJobs(filters: JobFilters = {}) {
     queryKey:        ['jobs', filters],
     queryFn:         () => getJobs(filters),
     staleTime:       2 * 60 * 1000,
-    placeholderData: keepPreviousData, // smooth page transitions — keeps old data visible while new page loads
+    placeholderData: keepPreviousData,
+    // Poll every 5s until server background fetch is complete; SSE also triggers refetch
+    refetchInterval: (query) => {
+      const data = query.state.data as JobsResponse | undefined;
+      if (!data || !data.isFullyLoaded) return 5000;
+      return false;
+    },
   });
 }
 
