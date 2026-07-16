@@ -3,10 +3,11 @@ const { protect } = require('../middleware/auth.middleware');
 const {
   register, verifyOtp, resendOtp,
   login, refresh,
-  getGoogleOAuthUrl, googleCallback, me,
+  googleAuth, getGoogleOAuthUrl, googleCallback, me,
   forgotPassword, resetPassword, updateProfile,
 } = require('../controllers/auth.controller');
 
+router.post('/google', googleAuth);
 router.post('/register', register);
 router.post('/verify-otp', verifyOtp);
 router.post('/resend-otp', resendOtp);

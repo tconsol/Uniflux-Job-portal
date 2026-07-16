@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
+const axios = require('axios');
 const { OAuth2Client } = require('googleapis').Auth;
 const User = require('../models/User');
 const { sendOtpEmail, sendPasswordResetEmail } = require('../services/email.service');
@@ -159,6 +160,62 @@ async function refresh(req, res) {
   }
 }
 
+// POST /api/auth/google — credential is an OAuth2 access_token from @react-oauth/google
+async function googleAuth(req, res, next) {
+  try {
+    const { credential } = req.body;
+    if (!credential) return res.status(400).json({ message: 'credential required' });
+
+    // Verify access_token by fetching user info from Google
+    const { data } = await axios.get(
+      `https://www.googleapis.com/oauth2/v1/userinfo?access_token=${credential}`,
+      { timeout: 10000 },
+    );
+    const { email, name, picture, id: googleId } = data;
+    if (!email) return res.status(400).json({ message: 'Google did not return an email' });
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      user = await User.create({
+        name:            name || email.split('@')[0],
+        email,
+        googleId,
+        avatar:          picture || null,
+        password:        crypto.randomBytes(32).toString('hex'),
+        isEmailVerified: true,
+        isActive:        true,
+        agreedToTerms:   true,
+        agreedToTermsAt: new Date(),
+      });
+      await activateFreePlan(user._id);
+    } else {
+      if (!user.isActive) return res.status(403).json({ message: 'Account is deactivated' });
+
+      // Backfill missing fields
+      let dirty = false;
+      if (!user.googleId)  { user.googleId = googleId;      dirty = true; }
+      if (!user.avatar)    { user.avatar   = picture || null; dirty = true; }
+      if (!user.isEmailVerified) { user.isEmailVerified = true; dirty = true; }
+      if (dirty) await user.save();
+    }
+
+    const tokens = generateTokens(user._id);
+    res.json({
+      user: {
+        _id:    user._id,
+        name:   user.name,
+        email:  user.email,
+        avatar: user.avatar,
+        isAdmin: user.isAdmin,
+      },
+      tokens,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function getGoogleOAuthUrl(req, res) {
   const client = new OAuth2Client(
     process.env.GOOGLE_CLIENT_ID,
@@ -292,6 +349,6 @@ async function updateProfile(req, res) {
 
 module.exports = {
   register, verifyOtp, resendOtp, login, refresh,
-  getGoogleOAuthUrl, googleCallback, me,
+  googleAuth, getGoogleOAuthUrl, googleCallback, me,
   forgotPassword, resetPassword, updateProfile,
 };
