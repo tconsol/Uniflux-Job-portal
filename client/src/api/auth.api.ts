@@ -26,6 +26,11 @@ export async function getMe() {
   return data.user;
 }
 
+export async function googleLogin(credential: string) {
+  const { data } = await api.post<{ user: User; tokens: AuthTokens }>('/auth/google', { credential });
+  return data;
+}
+
 export async function getGoogleOAuthUrl() {
   const { data } = await api.get<{ url: string }>('/auth/oauth/google');
   return data.url;

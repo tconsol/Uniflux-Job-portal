@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Briefcase, Eye, EyeOff, Search, Bell, CheckCircle2, TrendingUp } from 'lucide-react';
-import { login as loginApi, getGoogleOAuthUrl } from '../api/auth.api';
+import { useGoogleLogin } from '@react-oauth/google';
+import { login as loginApi, googleLogin } from '../api/auth.api';
 import { useAuth } from '../context/AuthContext';
 
 const FEATURES = [
@@ -46,10 +47,24 @@ export default function Login() {
     }
   }
 
-  async function handleGoogle() {
-    const url = await getGoogleOAuthUrl();
-    window.location.href = url;
-  }
+  const handleGoogle = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setError('');
+      setLoading(true);
+      try {
+        const data = await googleLogin(tokenResponse.access_token);
+        login(data.tokens, data.user);
+        navigate('/jobs');
+      } catch (err: unknown) {
+        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+        setError(msg ?? 'Google sign-in failed');
+      } finally {
+        setLoading(false);
+      }
+    },
+    onError: () => setError('Google sign-in was cancelled or failed'),
+    flow: 'implicit',
+  });
 
   return (
     <div className="h-screen overflow-hidden flex">
@@ -125,7 +140,7 @@ export default function Login() {
           </div>
 
           <button
-            onClick={handleGoogle}
+            onClick={() => handleGoogle()}
             className="w-full flex items-center justify-center gap-3 border border-gray-200 hover:bg-gray-50 text-gray-700 py-2.5 rounded-xl font-medium text-sm transition-colors mb-5 shadow-sm"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24">
