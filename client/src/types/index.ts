@@ -7,6 +7,7 @@ export interface User {
   isActive: boolean;
   agreedToTerms: boolean;
   agreedToTermsAt?: string;
+  region?: 'US' | 'IN';
   razorpayCustomerId?: string;
   profile: {
     resumeUrl?: string;

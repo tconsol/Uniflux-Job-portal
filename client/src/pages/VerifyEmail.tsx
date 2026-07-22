@@ -1,11 +1,11 @@
 import { useState, useRef, type KeyboardEvent, type ClipboardEvent } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { Briefcase, Loader2, RefreshCw } from 'lucide-react';
-import { verifyOtp, resendOtp } from '../api/auth.api';
+import { Briefcase, Loader2, RefreshCw, Globe } from 'lucide-react';
+import { verifyOtp, resendOtp, updateProfile } from '../api/auth.api';
 import { useAuth } from '../context/AuthContext';
 
 export default function VerifyEmail() {
-  const { login } = useAuth();
+  const { login, refreshUser } = useAuth();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const email = params.get('email') ?? '';
@@ -15,6 +15,11 @@ export default function VerifyEmail() {
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
+
+  // Region confirm step (shown after successful verification)
+  const [confirmRegion, setConfirmRegion] = useState<'US' | 'IN' | null>(null);
+  const [defaultRegion, setDefaultRegion] = useState<'US' | 'IN'>('US');
+  const [savingRegion, setSavingRegion] = useState(false);
 
   const refs = [
     useRef<HTMLInputElement>(null),
@@ -58,7 +63,9 @@ export default function VerifyEmail() {
     try {
       const data = await verifyOtp(email, otp);
       login(data.tokens, data.user);
-      navigate('/jobs');
+      const reg = (data.user.region as 'US' | 'IN') ?? 'US';
+      setDefaultRegion(reg);
+      setConfirmRegion(reg); // show region confirm step instead of navigating away
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Invalid OTP';
       setError(msg);
@@ -66,6 +73,23 @@ export default function VerifyEmail() {
       refs[0].current?.focus();
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function continueToJobs() {
+    setSavingRegion(true);
+    setError('');
+    try {
+      if (confirmRegion && confirmRegion !== defaultRegion) {
+        await updateProfile({ region: confirmRegion });
+        await refreshUser();
+      }
+      navigate('/jobs');
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Failed to save region';
+      setError(msg);
+    } finally {
+      setSavingRegion(false);
     }
   }
 
@@ -99,6 +123,45 @@ export default function VerifyEmail() {
             <span className="text-xl font-bold text-gray-900">Jobwalkers</span>
           </div>
 
+          {confirmRegion ? (
+            <div className="text-center">
+              <div className="w-14 h-14 bg-brand-50 border border-brand-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <Globe className="w-7 h-7 text-brand-600" />
+              </div>
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">Where do you want jobs?</h1>
+              <p className="text-sm text-gray-500 mb-6">
+                We picked this from your location — change it if it's wrong. You can update it anytime in your profile.
+              </p>
+              <div className="inline-flex rounded-xl border border-gray-200 bg-gray-50 p-1 mb-6">
+                {(['US', 'IN'] as const).map((r) => (
+                  <button
+                    key={r}
+                    onClick={() => setConfirmRegion(r)}
+                    disabled={savingRegion}
+                    className={`px-6 py-2.5 text-sm font-medium rounded-lg transition disabled:opacity-60 ${
+                      confirmRegion === r ? 'bg-brand-600 text-white' : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    {r === 'US' ? 'United States' : 'India'}
+                  </button>
+                ))}
+              </div>
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl text-center mb-4">
+                  {error}
+                </div>
+              )}
+              <button
+                onClick={continueToJobs}
+                disabled={savingRegion}
+                className="w-full bg-brand-600 hover:bg-brand-700 text-white py-2.5 rounded-xl font-semibold text-sm transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+              >
+                {savingRegion && <Loader2 className="w-4 h-4 animate-spin" />}
+                Continue to jobs
+              </button>
+            </div>
+          ) : (
+          <>
           <div className="text-center mb-8">
             <div className="w-14 h-14 bg-brand-50 border border-brand-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <svg className="w-7 h-7 text-brand-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -170,6 +233,8 @@ export default function VerifyEmail() {
               Back to register
             </Link>
           </p>
+          </>
+          )}
         </div>
       </div>
     </div>

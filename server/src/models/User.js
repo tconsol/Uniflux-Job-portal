@@ -8,6 +8,7 @@ const userSchema = new mongoose.Schema(
     password: { type: String, default: null },
     googleId: { type: String, default: null, sparse: true },
     avatar:   { type: String, default: null },
+    region:   { type: String, enum: ['US', 'IN'], default: 'US' }, // job-feed market; geoip-defaulted, user-editable
     razorpayCustomerId: { type: String, default: null },
     isActive: { type: Boolean, default: true },
     isAdmin: { type: Boolean, default: false },

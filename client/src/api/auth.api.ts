@@ -51,7 +51,7 @@ export async function resetPassword(email: string, otp: string, newPassword: str
   return data;
 }
 
-export async function updateProfile(payload: { name?: string; currentPassword?: string; newPassword?: string }) {
+export async function updateProfile(payload: { name?: string; currentPassword?: string; newPassword?: string; region?: 'US' | 'IN' }) {
   const { data } = await api.put<{ message: string; user: User }>('/auth/profile', payload);
   return data;
 }

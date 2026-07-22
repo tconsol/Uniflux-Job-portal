@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { User, CreditCard, Calendar, Shield, Pencil, Eye, EyeOff, Check, X, KeyRound, Zap } from 'lucide-react';
+import { User, CreditCard, Calendar, Shield, Pencil, Eye, EyeOff, Check, X, KeyRound, Zap, Globe } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSubscription } from '../hooks/useBilling';
 import { updateProfile } from '../api/auth.api';
@@ -39,6 +39,24 @@ export default function Profile() {
   const [passSuccess, setPassSuccess]   = useState('');
 
   const isGoogleUser = !!user?.googleId;
+
+  // Region (job market)
+  const [regionSaving, setRegionSaving] = useState(false);
+  const [regionError, setRegionError]   = useState('');
+
+  async function saveRegion(next: 'US' | 'IN') {
+    if (next === (user?.region ?? 'US')) return;
+    setRegionSaving(true);
+    setRegionError('');
+    try {
+      await updateProfile({ region: next });
+      await refreshUser();
+    } catch (err: any) {
+      setRegionError(err?.response?.data?.message ?? 'Failed to update region');
+    } finally {
+      setRegionSaving(false);
+    }
+  }
 
   async function saveName() {
     if (!nameVal.trim()) { setNameError('Name cannot be empty'); return; }
@@ -122,6 +140,29 @@ export default function Profile() {
               <User className="w-4 h-4" />
               <span>Member since {user && new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>
             </div>
+          </div>
+
+          {/* Job region */}
+          <div className="bg-white border border-gray-200 rounded-2xl p-6">
+            <h3 className="font-semibold text-gray-900 mb-1 flex items-center gap-2">
+              <Globe className="w-5 h-5 text-gray-400" /> Job region
+            </h3>
+            <p className="text-sm text-gray-500 mb-4">Which market's jobs appear in your feed.</p>
+            <div className="inline-flex rounded-xl border border-gray-200 bg-gray-50 p-1">
+              {(['US', 'IN'] as const).map((r) => (
+                <button
+                  key={r}
+                  onClick={() => saveRegion(r)}
+                  disabled={regionSaving}
+                  className={`px-5 py-2 text-sm font-medium rounded-lg transition disabled:opacity-60 ${
+                    (user?.region ?? 'US') === r ? 'bg-brand-600 text-white' : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  {r === 'US' ? 'United States' : 'India'}
+                </button>
+              ))}
+            </div>
+            {regionError && <p className="text-red-500 text-xs mt-2">{regionError}</p>}
           </div>
 
           {/* Change password */}

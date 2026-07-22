@@ -101,8 +101,8 @@ function remapByJobType(byType = {}) {
 let _countsCache = null, _countsCacheTime = 0;
 const COUNTS_TTL = 5 * 60 * 1000;
 
-async function fetchCounts({ keyword, location, job_type } = {}) {
-  const key = `counts:${JSON.stringify({ keyword, location, job_type })}`;
+async function fetchCounts({ keyword, location, job_type, country } = {}) {
+  const key = `counts:${JSON.stringify({ keyword, location, job_type, country })}`;
   const cached = cacheGet(key);
   if (cached) return cached;
 
@@ -110,6 +110,7 @@ async function fetchCounts({ keyword, location, job_type } = {}) {
   if (keyword)  params.keyword  = keyword;
   if (location) params.location = location;
   if (job_type) params.job_type = JOB_TYPE_TO_API[job_type] || job_type;
+  if (country)  params.country  = country;
 
   const { data } = await axios.get(COUNTS_URL, { params, timeout: 10000 });
   const result = {
@@ -122,16 +123,16 @@ async function fetchCounts({ keyword, location, job_type } = {}) {
 }
 
 // ─── jobs (per-page proxy, newest-first via page reversal) ────────────────
-async function fetchJobs({ page = 1, keyword, location, job_type } = {}) {
+async function fetchJobs({ page = 1, keyword, location, job_type, country } = {}) {
   // Get total pages so we can reverse page order (API is oldest-first)
-  const counts     = await fetchCounts({ keyword, location, job_type });
+  const counts     = await fetchCounts({ keyword, location, job_type, country });
   const totalPages = Math.ceil(counts.total / PAGE_SIZE) || 1;
   const safePage   = Math.min(Math.max(1, page), totalPages);
 
   // client page 1 → last API page (newest jobs), page 2 → second-last, etc.
   const apiPage = Math.max(1, totalPages - safePage + 1);
 
-  const cacheKey = JSON.stringify({ apiPage, keyword, location, job_type });
+  const cacheKey = JSON.stringify({ apiPage, keyword, location, job_type, country });
   const cached   = cacheGet(cacheKey);
   if (cached) return { ...cached, page: safePage, totalPages, hasMore: safePage < totalPages };
 
@@ -139,6 +140,7 @@ async function fetchJobs({ page = 1, keyword, location, job_type } = {}) {
   if (keyword)  params.keyword  = keyword;
   if (location) params.location = location;
   if (job_type) params.job_type = JOB_TYPE_TO_API[job_type] || job_type;
+  if (country)  params.country  = country;
 
   const { data } = await axios.get(PUBLIC_JOBS_URL, { params, timeout: 30000 });
 

@@ -5,6 +5,9 @@ const { OAuth2Client } = require('googleapis').Auth;
 const User = require('../models/User');
 const { sendOtpEmail, sendPasswordResetEmail } = require('../services/email.service');
 const { activateFreePlan } = require('../services/razorpay.service');
+const { clientIpFrom, regionForIp } = require('../services/geo.service');
+
+const REGIONS = ['US', 'IN'];
 
 function generateTokens(userId) {
   const access = jwt.sign(
@@ -55,6 +58,7 @@ async function register(req, res) {
       name,
       email,
       password,
+      region: regionForIp(clientIpFrom(req)), // geoip default; user can change later
       isEmailVerified: false,
       agreedToTerms: true,
       agreedToTermsAt: new Date(),
@@ -182,6 +186,7 @@ async function googleAuth(req, res, next) {
         email,
         googleId,
         avatar:          picture || null,
+        region:          regionForIp(clientIpFrom(req)), // geoip default
         password:        crypto.randomBytes(32).toString('hex'),
         isEmailVerified: true,
         isActive:        true,
@@ -256,7 +261,7 @@ async function googleCallback(req, res) {
         user.isEmailVerified = true;
         await user.save();
       } else {
-        user = await User.create({ name, email, googleId, isEmailVerified: true });
+        user = await User.create({ name, email, googleId, isEmailVerified: true, region: regionForIp(clientIpFrom(req)) });
         await activateFreePlan(user._id);
       }
     }
@@ -321,11 +326,17 @@ async function resetPassword(req, res) {
 
 async function updateProfile(req, res) {
   try {
-    const { name, currentPassword, newPassword } = req.body;
+    const { name, currentPassword, newPassword, region } = req.body;
     const user = await User.findById(req.user._id).select('+password');
 
     if (name && name.trim()) {
       user.name = name.trim();
+    }
+
+    if (region !== undefined) {
+      if (!REGIONS.includes(region))
+        return res.status(400).json({ message: 'region must be US or IN' });
+      user.region = region;
     }
 
     if (newPassword) {

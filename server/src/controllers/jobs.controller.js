@@ -1,14 +1,25 @@
 const { fetchJobs, fetchCounts, fetchJobById } = require('../services/jobs.service');
 const UserApply = require('../models/UserApply');
 const { addConnection, removeConnection } = require('../services/sse.service');
+const { clientIpFrom, regionForIp } = require('../services/geo.service');
+
+// Country ('us'/'in') for the marketplace feed: prefer the logged-in user's
+// stored region; else a ?country= override; else geoip on the request IP.
+function countryForRequest(req) {
+  if (req.user?.region) return req.user.region.toLowerCase();
+  const q = String(req.query.country || '').toLowerCase();
+  if (q === 'us' || q === 'in') return q;
+  return regionForIp(clientIpFrom(req)).toLowerCase();
+}
 
 async function listJobs(req, res) {
   try {
     const { page = 1, keyword, location, jobType } = req.query;
     const { planSlug, applyLimit, subscription } = req.subscription;
+    const country = countryForRequest(req);
 
     const [result, applies] = await Promise.all([
-      fetchJobs({ page: Number(page), keyword, location, job_type: jobType }),
+      fetchJobs({ page: Number(page), keyword, location, job_type: jobType, country }),
       UserApply.find({ userId: req.user._id }).select('jobId appliedAt').lean(),
     ]);
 
@@ -57,7 +68,7 @@ async function sseStream(req, res) {
 async function getJobCount(req, res) {
   try {
     const { keyword, location, jobType } = req.query;
-    const data = await fetchCounts({ keyword, location, job_type: jobType });
+    const data = await fetchCounts({ keyword, location, job_type: jobType, country: countryForRequest(req) });
     res.json(data);
   } catch (err) {
     console.error('[getJobCount]', err.message);
@@ -68,7 +79,7 @@ async function getJobCount(req, res) {
 // kept for backward compat — same as /counts but returns { total } only
 async function getWeekTotal(req, res) {
   try {
-    const data = await fetchCounts();
+    const data = await fetchCounts({ country: countryForRequest(req) });
     res.json({ total: data.total });
   } catch (err) {
     console.error('[getWeekTotal]', err.message);
@@ -76,4 +87,4 @@ async function getWeekTotal(req, res) {
   }
 }
 
-module.exports = { listJobs, getJob, sseStream, getJobCount, getWeekTotal };
+module.exports = { listJobs, getJob, sseStream, getJobCount, getWeekTotal, countryForRequest };
