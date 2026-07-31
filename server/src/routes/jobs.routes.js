@@ -1,11 +1,11 @@
 const router = require('express').Router();
-const { protect } = require('../middleware/auth.middleware');
+const { protect, optionalAuth } = require('../middleware/auth.middleware');
 const { attachSubscription } = require('../middleware/subscription.middleware');
 const { listJobs, getJob, sseStream, getJobCount, getWeekTotal } = require('../controllers/jobs.controller');
 const { recordApply, getApplied } = require('../controllers/apply.controller');
 
-router.get('/counts',     getJobCount);  // public — total marketplace count
-router.get('/week-total', getWeekTotal); // public — week filtered count
+router.get('/counts',     optionalAuth, getJobCount);  // public — total marketplace count, region-aware if logged in
+router.get('/week-total', optionalAuth, getWeekTotal); // public — week filtered count, region-aware if logged in
 
 router.use(protect);
 router.get('/sse',        attachSubscription, sseStream);

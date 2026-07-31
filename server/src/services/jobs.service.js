@@ -49,8 +49,9 @@ function normalizeJobType(raw) {
 
 function mapLocation(loc) {
   if (!loc) return '';
-  if (loc.is_remote) return 'Remote';
-  return loc.raw || [loc.city, loc.state, loc.country].filter(Boolean).join(', ') || '';
+  const named = loc.raw || [loc.city, loc.state, loc.country].filter(Boolean).join(', ');
+  if (named) return named;
+  return loc.is_remote ? 'Remote' : '';
 }
 
 function mapJob(sj) {
