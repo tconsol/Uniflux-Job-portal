@@ -164,6 +164,23 @@ async function refresh(req, res) {
   }
 }
 
+// POST /api/auth/extension-refresh — mints a short-lived, extension-scoped
+// token from the caller's already-verified primary access token (via
+// `protect`). Keeps the high-value primary JWT off the extension entirely.
+async function extensionRefresh(req, res) {
+  try {
+    const expiresIn = 300; // 5 minutes, matches PLAN.md §3.2
+    const token = jwt.sign(
+      { userId: req.user._id, type: 'extension' },
+      process.env.JWT_SECRET,
+      { expiresIn }
+    );
+    res.json({ token, expiresIn });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+}
+
 // POST /api/auth/google — credential is an OAuth2 access_token from @react-oauth/google
 async function googleAuth(req, res, next) {
   try {
@@ -359,7 +376,7 @@ async function updateProfile(req, res) {
 }
 
 module.exports = {
-  register, verifyOtp, resendOtp, login, refresh,
+  register, verifyOtp, resendOtp, login, refresh, extensionRefresh,
   googleAuth, getGoogleOAuthUrl, googleCallback, me,
   forgotPassword, resetPassword, updateProfile,
 };
