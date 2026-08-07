@@ -48,7 +48,7 @@ test('extensionAuth: rejects token with wrong type', async () => {
   const req = { headers: { 'x-extension-auth': badToken } };
   const res = mockRes();
   let calledNext = false;
-  // extensionAuth looks up the user in Mongo — stub the model lookup out via req._testUserLookup override
+  // The wrong-type check in extensionAuth rejects and returns before reaching the Mongo lookup, so no DB connection is needed here.
   await extensionAuth(req, res, () => { calledNext = true; });
   assert.strictEqual(calledNext, false);
   assert.strictEqual(res.statusCode, 401);

@@ -64,10 +64,22 @@ test('getExtensionProfile: fills defaults when profile subdocument is sparse', a
   await getExtensionProfile(req, res);
 
   const p = res.body.profile;
-  assert.strictEqual(p.resumeUrl, null);
-  assert.deepStrictEqual(p.skills, []);
-  assert.deepStrictEqual(p.education, []);
-  assert.deepStrictEqual(p.experience, []);
-  assert.deepStrictEqual(p.certifications, []);
-  assert.deepStrictEqual(p.preferences, { locations: [], jobTypes: [], salaryMin: null });
+  assert.deepStrictEqual(p, {
+    name: 'Bare User',
+    email: 'bare@example.com',
+    resumeUrl: null,
+    skills: [],
+    phone: null,
+    location: null,
+    linkedIn: null,
+    portfolio: null,
+    github: null,
+    title: null,
+    bio: null,
+    education: [],
+    experience: [],
+    certifications: [],
+    coverLetter: null,
+    preferences: { locations: [], jobTypes: [], salaryMin: null },
+  });
 });

@@ -3,6 +3,8 @@ const { test } = require('node:test');
 const assert = require('node:assert');
 
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-for-extension-refresh';
+process.env.RAZORPAY_KEY_ID     = process.env.RAZORPAY_KEY_ID     || 'test-razorpay-key-id';
+process.env.RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || 'test-razorpay-key-secret';
 
 const jwt = require('jsonwebtoken');
 const { extensionRefresh } = require('../src/controllers/auth.controller');

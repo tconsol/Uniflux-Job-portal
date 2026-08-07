@@ -1,9 +1,11 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
-// Shared-secret gate — every extension request must carry this header.
-// Rotates by changing EXTENSION_KEY in .env (invalidates all installed
-// extensions until they ship an update with the new key baked in).
+// Shared value baked into the shipped extension's source — NOT a secret an
+// attacker can't get, just a cheap filter against non-extension traffic.
+// The real authorization boundary is extensionAuth's short-lived JWT below.
+// Rotating this value requires shipping a new extension build (instantly
+// breaks all installed copies until users update).
 function requireExtensionKey(req, res, next) {
   const key = req.headers['x-extension-key'];
   if (!key || key !== process.env.EXTENSION_KEY) {

@@ -35,11 +35,11 @@ const ALLOWED_ORIGINS = [
   ...(process.env.ADMIN_URL  || 'http://localhost:3001').split(','),
 ].map((o) => o.trim()).filter(Boolean);
 
+const isAllowed = (origin) =>
+  ALLOWED_ORIGINS.includes(origin) || /^chrome-extension:\/\/[a-p]{32}$/.test(origin);
+
 app.use(cors({
-  origin: (origin, cb) => {
-    if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
-    cb(new Error(`CORS: origin ${origin} not allowed`));
-  },
+  origin: (origin, cb) => cb(null, !origin || isAllowed(origin)),
   credentials: true,
 }));
 
