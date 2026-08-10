@@ -21,6 +21,81 @@ export interface User {
   createdAt: string;
 }
 
+// Extension-facing profile fields — shape must match
+// uniflux-autofill-extension/src/types/index.ts ProfileField, and
+// server/src/controllers/profile.controller.js serializeProfile().
+export interface ProfileEducationEntry {
+  institution?: string;
+  degree?: string;
+  field?: string;
+  startDate?: string;
+  endDate?: string;
+  gpa?: string;
+}
+
+export interface ProfileExperienceEntry {
+  company?: string;
+  title?: string;
+  location?: string;
+  startDate?: string;
+  endDate?: string;
+  current?: boolean;
+  description?: string;
+}
+
+export interface ProfileCertificationEntry {
+  name?: string;
+  issuer?: string;
+  date?: string;
+  url?: string;
+}
+
+export interface ProfileField {
+  name: string;
+  email: string;
+  resumeUrl: string | null;
+  skills: string[];
+  phone: string | null;
+  location: string | null;
+  linkedIn: string | null;
+  portfolio: string | null;
+  github: string | null;
+  title: string | null;
+  bio: string | null;
+  education: ProfileEducationEntry[];
+  experience: ProfileExperienceEntry[];
+  certifications: ProfileCertificationEntry[];
+  coverLetter: string | null;
+  preferences: {
+    locations: string[];
+    jobTypes: string[];
+    salaryMin: number | null;
+  };
+}
+
+// Partial update payload for PUT /api/profile/me — everything optional,
+// null clears a nullable scalar field.
+export type ProfileUpdatePayload = Partial<{
+  resumeUrl: string | null;
+  phone: string | null;
+  location: string | null;
+  linkedIn: string | null;
+  portfolio: string | null;
+  github: string | null;
+  title: string | null;
+  bio: string | null;
+  coverLetter: string | null;
+  skills: string[];
+  education: ProfileEducationEntry[];
+  experience: ProfileExperienceEntry[];
+  certifications: ProfileCertificationEntry[];
+  preferences: Partial<{
+    locations: string[];
+    jobTypes: string[];
+    salaryMin: number | null;
+  }>;
+}>;
+
 export interface Plan {
   _id: string;
   slug: 'free' | 'standard' | 'premium' | 'elite';
